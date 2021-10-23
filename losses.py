@@ -54,7 +54,7 @@ class DCELoss(nn.Module):
         super().__init__()
         self.gamma = gamma
 
-    def forward(self, features, labels, prototypes, args):
+    def forward(self, features, prototypes, args):
         features = features.to("cpu")
         prototypes = prototypes.to("cpu")
         n_classes = args.ways
@@ -85,13 +85,13 @@ class CPELoss(nn.Module):
         self.proto = PrototypeLoss()
         self.ce = torch.nn.CrossEntropyLoss()
 
-    def forward(self, features, outputs, labels, prototypes):
+    def forward(self, features, labels, prototypes):
         dce_loss = self.dce(features, labels, prototypes, self.args)
-        cls_loss = self.ce(outputs, labels)
+        # cls_loss = self.ce(outputs, labels)
         prototype_loss = self.proto(features, labels, prototypes)
         return (
             self.lambda_1 * dce_loss
-            + self.lambda_2 * cls_loss
+            # + self.lambda_2 * cls_loss
             + self.lambda_3 * prototype_loss
         )
 

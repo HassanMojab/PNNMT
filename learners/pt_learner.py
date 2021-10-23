@@ -60,9 +60,9 @@ def pt_learner(model, queue, criterion, optim, args, device):
     query_labels = query_data["label"].to(device)
     query_task = queue[j]["task"]
 
-    outputs, query_features = model.forward(query_task, query_data)
+    _, query_features = model.forward(query_task, query_data)
 
-    loss = criterion(query_features, outputs, query_labels, prototypes)
+    loss = criterion(query_features, query_labels, prototypes)
     loss.backward()
     losses += loss.item()
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
