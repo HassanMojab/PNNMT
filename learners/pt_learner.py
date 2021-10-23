@@ -30,6 +30,9 @@ def compute_prototypes(
 
 
 def pt_learner(model, queue, criterion, optim, args, device):
+    model.train()
+    optim.zero_grad()
+
     queue_length = len(queue)
     losses = 0
 
@@ -38,16 +41,16 @@ def pt_learner(model, queue, criterion, optim, args, device):
     features = []
     labels = []
 
-    model.eval()
-    with torch.no_grad():
-        for i in range(queue_length):
-            support_data = queue[i]["batch"]["support"]
-            support_labels = support_data["label"].to(device)
-            support_task = queue[i]["task"]
+    # model.eval()
+    # with torch.no_grad():
+    for i in range(queue_length):
+        support_data = queue[i]["batch"]["support"]
+        support_labels = support_data["label"].to(device)
+        support_task = queue[i]["task"]
 
-            _, support_features = model.forward(support_task, support_data)
-            features.append(support_features)
-            labels.append(support_labels)
+        _, support_features = model.forward(support_task, support_data)
+        features.append(support_features)
+        labels.append(support_labels)
 
     features = torch.cat(features)
     labels = torch.cat(labels)
@@ -56,9 +59,6 @@ def pt_learner(model, queue, criterion, optim, args, device):
     query_data = queue[j]["batch"]["query"]
     query_labels = query_data["label"].to(device)
     query_task = queue[j]["task"]
-
-    model.train()
-    optim.zero_grad()
 
     outputs, query_features = model.forward(query_task, query_data)
 
