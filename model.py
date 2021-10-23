@@ -31,7 +31,6 @@ class BertMetaLearning(nn.Module):
             token_type_ids=data["token_type_ids"],
         )
 
-        batch_size = data["input_ids"].shape[0]
         features = outputs[1]  # [n, 768]
 
         logits = None

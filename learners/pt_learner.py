@@ -59,7 +59,7 @@ def pt_learner(model, queue, criterion, optim, args, device):
 
     loss = criterion(query_features, query_outputs, query_labels, prototypes)
     loss.backward()
-    losses += loss.item()
+    losses += loss.detach().item()
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
     optim.step()
 

@@ -1,4 +1,4 @@
-import argparse, time, torch, os, logging, warnings, sys
+import argparse, gc, time, torch, os, logging, warnings, sys
 import numpy as np
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -154,7 +154,7 @@ def evaluate(model, task, data, device):
             data_labels = batch["label"].to(device)
             loss = F.cross_entropy(output, data_labels, reduction="none")
             loss = loss.mean()
-            total_loss += loss.item()
+            total_loss += loss.detach().item()
         total_loss /= len(data)
         return total_loss
 
@@ -278,6 +278,7 @@ def main():
             num_workers=args.num_workers,
             pin_memory=args.pin_memory,
             collate_fn=train_sampler.episodic_collate_fn,
+            shuffle=False,
         )
         train_loaders.append(train_loader)
 
@@ -285,6 +286,8 @@ def main():
             dev_corpus, batch_size=batch_size, pin_memory=args.pin_memory
         )
         dev_loaders.append(dev_loader)
+
+        gc.collect()
 
     ### ================================
 
