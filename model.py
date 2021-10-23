@@ -23,7 +23,7 @@ class BertMetaLearning(nn.Module):
         self.sc_dropout = nn.Dropout(args.dropout)
         self.sc_classifier = nn.Linear(args.hidden_dims, args.sc_labels)
 
-    def forward(self, task, data):
+    def forward(self, task, data, classify=True):
 
         if "qa" in task:
 
@@ -82,8 +82,11 @@ class BertMetaLearning(nn.Module):
             batch_size = data["input_ids"].shape[0]
             features = outputs[1]  # [n, 768]
 
-            pooled_output = self.sc_dropout(features)
-            logits = self.sc_classifier(pooled_output)
+            logits = None
+
+            if classify:
+                pooled_output = self.sc_dropout(features)
+                logits = self.sc_classifier(pooled_output)
 
             # loss = F.cross_entropy(logits, data["label"], reduction="none")
             # outputs = (loss, logits) + outputs[2:]
