@@ -80,9 +80,7 @@ parser.add_argument("--beta", type=float, default=1.0, help="")
 
 # ---------------
 parser.add_argument("--epochs", type=int, default=5, help="iterations")
-parser.add_argument(
-    "--start_epoch", type=int, default=0, help="start iterations from"
-)
+parser.add_argument("--start_epoch", type=int, default=0, help="start iterations from")
 parser.add_argument("--ways", type=int, default=3, help="number of ways")
 parser.add_argument("--shot", type=int, default=4, help="number of shots")
 parser.add_argument("--query_num", type=int, default=4, help="number of queries")
@@ -107,6 +105,7 @@ parser.add_argument("--meta_tasks", type=str, default="sc,pa,qa,tc,po")
 parser.add_argument("--target_task", type=str, default="sc_fa")
 
 parser.add_argument("--num_workers", type=int, default=0, help="")
+parser.add_argument("--pin_memory", action="store_true", help="")
 parser.add_argument("--n_best_size", default=20, type=int)  # 20
 parser.add_argument("--max_answer_length", default=30, type=int)  # 30
 parser.add_argument(
@@ -277,12 +276,14 @@ def main():
             train_corpus,
             batch_sampler=train_sampler,
             num_workers=args.num_workers,
-            pin_memory=True,
+            pin_memory=args.pin_memory,
             collate_fn=train_sampler.episodic_collate_fn,
         )
         train_loaders.append(train_loader)
 
-        dev_loader = DataLoader(dev_corpus, batch_size=batch_size, pin_memory=True)
+        dev_loader = DataLoader(
+            dev_corpus, batch_size=batch_size, pin_memory=args.pin_memory
+        )
         dev_loaders.append(dev_loader)
 
     ### ================================
