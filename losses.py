@@ -88,7 +88,7 @@ class CPELoss(nn.Module):
 
     def forward(self, features, outputs, labels, prototypes):
         dce_loss = self.dce(features, prototypes, self.args)
-        cls_loss = self.ce(outputs, labels)
+        cls_loss = self.ce(outputs, labels.to(torch.long))
         prototype_loss = self.proto(features, labels, prototypes)
         return (
             self.lambda_1 * dce_loss
