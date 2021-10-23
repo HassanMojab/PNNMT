@@ -55,8 +55,8 @@ class DCELoss(nn.Module):
         self.gamma = gamma
 
     def forward(self, features, prototypes, args):
-        features = features.to("cpu")
-        prototypes = prototypes.to("cpu")
+        # features = features.to("cpu")
+        # prototypes = prototypes.to("cpu")
         n_classes = args.ways
         n_query = args.query_num
 
