@@ -342,7 +342,7 @@ def main():
             train_corpus,
             n_way=args.ways,
             n_shot=args.shot,
-            n_query=args.shot,
+            n_query=args.query_num,
             n_tasks=args.meta_iteration,
         )
         train_loader = DataLoader(

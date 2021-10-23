@@ -61,7 +61,7 @@ class DCELoss(nn.Module):
         n_query = args.query_num
 
         dists = euclidean_dist(features, prototypes)
-        dists = (-self.gamma * dists).exp()
+        # dists = (-self.gamma * dists).exp()
 
         log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1)
         target_inds = torch.arange(0, n_classes)
