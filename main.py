@@ -466,6 +466,14 @@ def main():
                         else:
                             loss_per_task[task[:2]] = val_loss_dict[task]
 
+                    for task in loss_per_task.keys():
+                        if loss_per_task[task] < min_task_losses[task]:
+                            print("Saving " + task + "  Model")
+                            torch.save(
+                                model, os.path.join(args.save, "model_" + task + ".pt"),
+                            )
+                            min_task_losses[task] = loss_per_task[task]
+
                     print(
                         "Time: %f, Step: %d, Train Loss: %f, Val Loss: %f"
                         % (
@@ -476,14 +484,6 @@ def main():
                         )
                     )
                     global_time = time.time()
-
-                    for task in loss_per_task.keys():
-                        if loss_per_task[task] < min_task_losses[task]:
-                            print("Saving " + task + "  Model")
-                            torch.save(
-                                model, os.path.join(args.save, "model_" + task + ".pt"),
-                            )
-                            min_task_losses[task] = loss_per_task[task]
 
                     total_loss = 0
 
