@@ -86,7 +86,7 @@ class CPELoss(nn.Module):
         self.ce = torch.nn.CrossEntropyLoss()
 
     def forward(self, features, labels, prototypes):
-        dce_loss = self.dce(features, labels, prototypes, self.args)
+        dce_loss = self.dce(features, prototypes, self.args)
         # cls_loss = self.ce(outputs, labels)
         prototype_loss = self.proto(features, labels, prototypes)
         return (
