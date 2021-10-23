@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
-from data import CorpusQA, CorpusSC, CorpusTC, CorpusPO, CorpusPA
+from data import CorpusQA, CorpusSC
 from model import BertMetaLearning
 from datapath import loc, get_loc
 
@@ -79,13 +79,13 @@ parser.add_argument(
 parser.add_argument("--beta", type=float, default=1.0, help="")
 
 # ---------------
-parser.add_argument("--epochs", type=int, default=5, help="iterations")  # 5
+parser.add_argument("--epochs", type=int, default=5, help="iterations")
 parser.add_argument(
     "--start_epoch", type=int, default=0, help="start iterations from"
-)  # 0
-parser.add_argument("--ways", type=int, default=3, help="number of ways")  # 2
-parser.add_argument("--shot", type=int, default=4, help="number of shots")  # 4
-parser.add_argument("--query_num", type=int, default=4, help="number of queries")  # 0
+)
+parser.add_argument("--ways", type=int, default=3, help="number of ways")
+parser.add_argument("--shot", type=int, default=4, help="number of shots")
+parser.add_argument("--query_num", type=int, default=4, help="number of queries")
 parser.add_argument("--meta_iteration", type=int, default=3000, help="")
 # ---------------
 
@@ -151,8 +151,8 @@ def evaluate(model, task, data, device):
     with torch.no_grad():
         total_loss = 0.0
         for batch in data:
-            data_labels = batch["label"].to(device)
             output, _ = model.forward(task, batch)
+            data_labels = batch["label"].to(device)
             loss = F.cross_entropy(output, data_labels, reduction="none")
             loss = loss.mean()
             total_loss += loss.item()
@@ -208,42 +208,6 @@ def main():
     #         local_files_only=args.local_model,
     #     )
     #     trg_batch_size = args.sc_batch_size
-    # elif "tc" in k:
-    #     trg_train_corpus = CorpusTC(
-    #         get_loc("train", k, args.data_dir)[0],
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_dev_corpus = CorpusTC(
-    #         get_loc("dev", k, args.data_dir)[0],
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_batch_size = args.tc_batch_size
-    # elif "po" in k:
-    #     trg_train_corpus = CorpusPO(
-    #         get_loc("train", k, args.data_dir)[0],
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_dev_corpus = CorpusPO(
-    #         get_loc("dev", k, args.data_dir)[0],
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_batch_size = args.po_batch_size
-    # elif "pa" in k:
-    #     trg_train_corpus = CorpusPA(
-    #         get_loc("train", k, args.data_dir)[0],
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_dev_corpus = CorpusPA(
-    #         get_loc("dev", k, args.data_dir)[0],
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_batch_size = args.pa_batch_size
 
     # trg_train_sampler = TaskSampler(
     #     trg_train_corpus,
@@ -299,42 +263,6 @@ def main():
                 local_files_only=args.local_model,
             )
             batch_size = args.sc_batch_size
-        elif "tc" in k:
-            train_corpus = CorpusTC(
-                get_loc("train", k, args.data_dir)[0],
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            dev_corpus = CorpusTC(
-                get_loc("dev", k, args.data_dir)[0],
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            batch_size = args.tc_batch_size
-        elif "po" in k:
-            train_corpus = CorpusPO(
-                get_loc("train", k, args.data_dir)[0],
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            dev_corpus = CorpusPO(
-                get_loc("dev", k, args.data_dir)[0],
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            batch_size = args.po_batch_size
-        elif "pa" in k:
-            train_corpus = CorpusPA(
-                get_loc("train", k, args.data_dir)[0],
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            dev_corpus = CorpusPA(
-                get_loc("dev", k, args.data_dir)[0],
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            batch_size = args.pa_batch_size
         else:
             continue
 

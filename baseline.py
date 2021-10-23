@@ -5,7 +5,7 @@ import pickle5 as pickle
 
 import numpy as np
 from torch.utils.data import DataLoader
-from data import CorpusQA, CorpusSC, CorpusTC, CorpusPO, CorpusPA
+from data import CorpusQA, CorpusSC
 from utils.utils import evaluateQA, evaluateNLI, evaluateNER, evaluatePOS, evaluatePA
 from utils.logger import Logger
 from model import BertMetaLearning
@@ -141,57 +141,6 @@ def load_data(task_lang):
             local_files_only=args.local_model
         )
         batch_size = args.sc_batch_size
-    elif task == "tc":
-        train_corpus = CorpusTC(
-            get_loc("train", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        dev_corpus = CorpusTC(
-            get_loc("dev", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        test_corpus = CorpusTC(
-            get_loc("test", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        batch_size = args.tc_batch_size
-    elif task == "po":
-        train_corpus = CorpusPO(
-            get_loc("train", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        dev_corpus = CorpusPO(
-            get_loc("dev", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        test_corpus = CorpusPO(
-            get_loc("test", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        batch_size = args.po_batch_size
-    elif task == "pa":
-        train_corpus = CorpusPA(
-            get_loc("train", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        dev_corpus = CorpusPA(
-            get_loc("dev", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        test_corpus = CorpusPA(
-            get_loc("test", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        batch_size = args.pa_batch_size
 
     return train_corpus, dev_corpus, test_corpus, batch_size
 
@@ -252,7 +201,7 @@ def train(model, task, data):
     model.train()
     for j, batch in enumerate(data):
         optim.zero_grad()
-        
+
         data_labels = batch["label"].to(DEVICE)
         output, _ = model.forward(args.task, batch)
         loss = F.cross_entropy(output, data_labels, reduction="none")

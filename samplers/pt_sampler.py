@@ -87,11 +87,11 @@ class TaskSampler(Sampler):
 
         def split_tensor(tensor):
             tensor = tensor.reshape(
-                (self.n_way, (self.n_shot + self.n_query), *tensor.shape[1:],)
+                (self.n_way, (self.n_shot + self.n_query), *tensor.shape[1:])
             )
             tensor = [
                 split.flatten(end_dim=1)
-                for split in torch.split(tensor, [self.n_shot, self.n_query], dim=1,)
+                for split in torch.split(tensor, [self.n_shot, self.n_query], dim=1)
             ]
 
             return tensor

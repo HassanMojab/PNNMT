@@ -2,16 +2,11 @@ import os, json, argparse, torch, logging, warnings, sys
 
 import numpy as np
 from torch.utils.data import DataLoader
-from data import CorpusQA, CorpusSC, CorpusTC, CorpusPO, CorpusPA
+from data import CorpusQA, CorpusSC
 from utils.utils import evaluateQA, evaluateNLI, evaluateNER, evaluatePOS, evaluatePA
 from utils.logger import Logger
 from model import BertMetaLearning
 from datapath import get_loc
-
-from transformers import (
-    AdamW,
-    get_linear_schedule_with_warmup,
-)
 
 logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
 warnings.filterwarnings("ignore")
@@ -88,10 +83,9 @@ sys.stdout = Logger(os.path.join(args.save, args.log_file))
 print(args)
 
 if torch.cuda.is_available():
-  if not args.cuda:
-    # print("WARNING: You have a CUDA device, so you should probably run with --cuda")
-    args.cuda = True
-  torch.cuda.manual_seed_all(args.seed)
+    if not args.cuda:
+        args.cuda = True
+    torch.cuda.manual_seed_all(args.seed)
 DEVICE = torch.device("cuda" if args.cuda else "cpu")
 
 
@@ -111,43 +105,19 @@ def load_data(task_lang):
             local_files_only=args.local_model
         )
         batch_size = args.sc_batch_size
-    elif task == "tc":
-        test_corpus = CorpusTC(
-            get_loc("test", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        batch_size = args.tc_batch_size
-    elif task == "po":
-        test_corpus = CorpusPO(
-            get_loc("test", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        batch_size = args.po_batch_size
-    elif task == "pa":
-        test_corpus = CorpusPA(
-            get_loc("test", task_lang, args.data_dir)[0],
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        batch_size = args.pa_batch_size
 
     return test_corpus, batch_size
 
 
 test_corpus, batch_size = load_data(args.task)
 test_dataloader = DataLoader(
-  test_corpus,
-  batch_size=batch_size,
-  pin_memory=True,
-  drop_last=True
+    test_corpus, batch_size=batch_size, pin_memory=True, drop_last=True
 )
 
 model = BertMetaLearning(args).to(DEVICE)
 
 if args.load != "":
-  model = torch.load(args.load)
+    model = torch.load(args.load)
 
 
 def test():
