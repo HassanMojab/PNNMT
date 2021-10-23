@@ -408,7 +408,13 @@ def main():
     ## == training ======
     global_time = time.time()
 
-    min_loss = float("inf")
+    min_task_losses = {
+        "qa": float("inf"),
+        "sc": float("inf"),
+        "po": float("inf"),
+        "tc": float("inf"),
+        "pa": float("inf"),
+    }
 
     try:
         for epoch_item in range(args.start_epoch, args.epochs):
@@ -447,10 +453,19 @@ def main():
                     train_loss = 0.0
 
                     # evalute on val_dataset
-                    # val_loss_total = evaluateMeta(
-                    #     model, [trg_dev_loader], device=DEVICE
-                    # )
-                    val_loss_total = evaluateMeta(model, dev_loaders, device=DEVICE)
+                    val_loss_dict, val_loss_total = evaluateMeta(
+                        model, dev_loaders, device=DEVICE
+                    )
+
+                    loss_per_task = {}
+                    for task in val_loss_dict.keys():
+                        if task[:2] in loss_per_task.keys():
+                            loss_per_task[task[:2]] = (
+                                loss_per_task[task[:2]] + val_loss_dict[task]
+                            )
+                        else:
+                            loss_per_task[task[:2]] = val_loss_dict[task]
+
                     print(
                         "Time: %f, Step: %d, Train Loss: %f, Val Loss: %f"
                         % (
@@ -460,19 +475,18 @@ def main():
                             val_loss_total,
                         )
                     )
+                    print("===============================================")
                     global_time = time.time()
 
-                    if val_loss_total < min_loss:
-                        torch.save(
-                            model,
-                            os.path.join(
-                                args.save, "model_" + args.target_task + ".pt"
-                            ),
-                        )
-                        min_loss = val_loss_total
-                        print("Saving " + args.target_task + "  Model")
+                    for task in loss_per_task.keys():
+                        if loss_per_task[task] < min_task_losses[task]:
+                            torch.save(
+                                model, os.path.join(args.save, "model_" + task + ".pt"),
+                            )
+                            min_task_losses[task] = loss_per_task[task]
+                            print("Saving " + task + "  Model")
                     total_loss = 0
-                    print("===============================================")
+
                 if args.scheduler:
                     scheduler.step()
 
