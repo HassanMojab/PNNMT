@@ -152,7 +152,7 @@ def evaluate(model, task, data, device):
         for batch in data:
             output, _ = model.forward(task, batch)
             data_labels = batch["label"].to(device)
-            loss = F.cross_entropy(output, data_labels, reduction="none")
+            loss = F.cross_entropy(output, data_labels.to(torch.long), reduction="none")
             loss = loss.mean()
             total_loss += loss.detach().item()
         total_loss /= len(data)
@@ -266,7 +266,7 @@ def main():
             continue
 
         train_sampler = TaskSampler(
-            train_corpus,                 # TODO: is it necessary to pass the whole data??
+            train_corpus,  # TODO: is it necessary to pass the whole data??
             n_way=args.ways,
             n_shot=args.shot,
             n_query=args.query_num,
