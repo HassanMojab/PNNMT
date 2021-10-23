@@ -475,16 +475,16 @@ def main():
                             val_loss_total,
                         )
                     )
-                    print("===============================================")
                     global_time = time.time()
 
                     for task in loss_per_task.keys():
                         if loss_per_task[task] < min_task_losses[task]:
+                            print("Saving " + task + "  Model")
                             torch.save(
                                 model, os.path.join(args.save, "model_" + task + ".pt"),
                             )
                             min_task_losses[task] = loss_per_task[task]
-                            print("Saving " + task + "  Model")
+
                     total_loss = 0
 
                 if args.scheduler:
