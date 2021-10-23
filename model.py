@@ -29,7 +29,7 @@ class BertMetaLearning(nn.Module):
         outputs = self.model(
             data["input_ids"],
             attention_mask=data["attention_mask"],
-            token_type_ids=data["token_type_ids"].to(torch.Long),
+            token_type_ids=data["token_type_ids"].to(torch.long),
         )
 
         features = outputs[1]  # [n, 768]
