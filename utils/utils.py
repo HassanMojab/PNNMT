@@ -105,9 +105,11 @@ def evaluateNLI(model, data, device, return_matrix=False):
         matrix = [[0 for _ in range(3)] for _ in range(3)]
         for batch in data:
             batch["label"] = batch["label"].to(device)
-            
+
             logits, _ = model.forward("sc", batch)
-            loss = F.cross_entropy(logits, batch["label"], reduction="none")
+            loss = F.cross_entropy(
+                logits, batch["label"].to(torch.long), reduction="none"
+            )
             loss = loss.mean()
 
             prediction = torch.argmax(logits, dim=1)
@@ -115,7 +117,7 @@ def evaluateNLI(model, data, device, return_matrix=False):
             for k in range(batch["label"].shape[0]):
                 matrix[batch["label"][k]][prediction[k]] += 1
             total += batch["label"].shape[0]
-            total_loss += loss.item()
+            total_loss += loss.detach().item()
 
         total_loss /= len(data)
         total_acc = correct / total

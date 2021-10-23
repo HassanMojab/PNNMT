@@ -204,12 +204,13 @@ def train(model, task, data):
 
         data_labels = batch["label"].to(DEVICE)
         output, _ = model.forward(args.task, batch)
-        loss = F.cross_entropy(output, data_labels, reduction="none")
+        loss = F.cross_entropy(output, data_labels.to(torch.long), reduction="none")
         loss = loss.mean()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
-        to_return += loss.item()
-        total_loss += loss.item()
+        loss_item = loss.detach().item()
+        to_return += loss_item
+        total_loss += loss_item
 
         # if args.tpu:
         #     # Optimizer for TPU
