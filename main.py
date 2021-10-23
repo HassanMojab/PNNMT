@@ -266,7 +266,7 @@ def main():
             continue
 
         train_sampler = TaskSampler(
-            train_corpus,
+            train_corpus,                 # TODO: is it necessary to pass the whole data??
             n_way=args.ways,
             n_shot=args.shot,
             n_query=args.query_num,
