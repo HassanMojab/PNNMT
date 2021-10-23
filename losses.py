@@ -50,9 +50,10 @@ class PrototypeLoss(nn.Module):
 
 
 class DCELoss(nn.Module):
-    def __init__(self, gamma=0.05):
+    def __init__(self, device, gamma=0.05):
         super().__init__()
         self.gamma = gamma
+        self.device = device
 
     def forward(self, features, prototypes, args):
         # features = features.to("cpu")
@@ -64,7 +65,7 @@ class DCELoss(nn.Module):
         # dists = (-self.gamma * dists).exp()
 
         log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1)
-        target_inds = torch.arange(0, n_classes)
+        target_inds = torch.arange(0, n_classes).to(self.device)
         target_inds = target_inds.view(n_classes, 1, 1)
         target_inds = target_inds.expand(n_classes, n_query, 1).long()
 
@@ -73,7 +74,7 @@ class DCELoss(nn.Module):
 
 
 class CPELoss(nn.Module):
-    def __init__(self, args):
+    def __init__(self, device, args):
         super().__init__()
         self.args = args
 
@@ -81,7 +82,7 @@ class CPELoss(nn.Module):
         self.lambda_2 = args.lambda_2
         self.lambda_3 = args.lambda_3
 
-        self.dce = DCELoss(gamma=args.temp_scale)
+        self.dce = DCELoss(device, gamma=args.temp_scale)
         self.proto = PrototypeLoss()
         self.ce = torch.nn.CrossEntropyLoss()
 

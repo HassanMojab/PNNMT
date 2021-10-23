@@ -397,7 +397,7 @@ def main():
         gamma=args.gamma,
         last_epoch=args.last_step - 1,
     )
-    criterion = CPELoss(args)
+    criterion = CPELoss(DEVICE, args)
 
     logger = {}
     logger["total_val_loss"] = []
