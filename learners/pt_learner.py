@@ -30,15 +30,10 @@ def compute_prototypes(
 
 
 def pt_learner(model, queue, criterion, optim, args, device):
-
-
     queue_length = len(queue)
     losses = 0
 
-    # for i in range(queue_length):
-
-    # i = randint(0, queue_length)
-    j = randint(0, queue_length)
+    j = randint(0, queue_length - 1)
 
     features = []
     labels = []
@@ -58,7 +53,6 @@ def pt_learner(model, queue, criterion, optim, args, device):
     labels = torch.cat(labels)
     prototypes = compute_prototypes(features, labels)
 
-    #
     query_data = queue[j]["batch"]["query"]
     query_labels = query_data["label"].to(device)
     query_task = queue[j]["task"]
@@ -75,28 +69,4 @@ def pt_learner(model, queue, criterion, optim, args, device):
     optim.step()
 
     return losses / queue_length
-
-
-## For Pt.
-def pt_evaluate(model, dataloader, prototypes, criterion, device):
-
-    ce = torch.nn.CrossEntropyLoss()
-
-    with torch.no_grad():
-        total_loss = 0.0
-        model.eval()
-        for i, batch in enumerate(dataloader):
-
-            sample, labels = batch
-            sample, labels = sample.to(device), labels.to(device)
-
-            logits, features = model.forward(sample)
-            # loss = criterion(features, logits, labels, prototypes)
-            loss = ce(logits, labels)
-            # loss, acc = criterion(features, target=labels)
-            loss = loss.mean()
-            total_loss += loss.item()
-
-        total_loss /= len(dataloader)
-        return total_loss
 
