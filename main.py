@@ -391,10 +391,11 @@ def main():
 
     except KeyboardInterrupt:
         print("skipping training")
+        print("Saving new last model...")
+        torch.save(model, os.path.join(args.save, "model_last.pt"))
 
-    # save last model
+    print("Saving new last model...")
     torch.save(model, os.path.join(args.save, "model_last.pt"))
-    print("Saving new last model")
 
 
 if __name__ == "__main__":
