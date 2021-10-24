@@ -308,7 +308,7 @@ def main():
         "pa": float("inf"),
     }
 
-    pt_learner = PtLearner(model, criterion, DEVICE)
+    pt_learner = PtLearner(criterion, DEVICE)
 
     try:
         for epoch_item in range(args.start_epoch, args.epochs):
@@ -335,7 +335,7 @@ def main():
 
                 ## == train ===================
                 # loss = reptile_learner(model, queue, optim, miteration_item, args)
-                loss = pt_learner.train(queue, optim, miteration_item, args)
+                loss = pt_learner.train(model, queue, optim, miteration_item, args)
                 train_loss += loss
 
                 ## == validation ==============
