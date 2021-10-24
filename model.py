@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 from transformers import AutoModel, logging
 
@@ -24,12 +23,11 @@ class BertMetaLearning(nn.Module):
         data["input_ids"] = data["input_ids"].to(self.device)
         data["attention_mask"] = data["attention_mask"].to(self.device)
         data["token_type_ids"] = data["token_type_ids"].to(self.device)
-        data["label"] = data["label"].to(self.device)
 
         outputs = self.model(
             data["input_ids"],
             attention_mask=data["attention_mask"],
-            token_type_ids=data["token_type_ids"].to(torch.long),
+            token_type_ids=data["token_type_ids"].long(),
         )
 
         features = outputs[1]  # [n, 768]

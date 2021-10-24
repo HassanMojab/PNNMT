@@ -105,9 +105,7 @@ def evaluateNLI(model, data, device, return_matrix=False):
             batch["label"] = batch["label"].to(device)
 
             logits, _ = model.forward("sc", batch)
-            loss = F.cross_entropy(
-                logits, batch["label"].to(torch.long), reduction="none"
-            )
+            loss = F.cross_entropy(logits, batch["label"].long(), reduction="none")
             loss = loss.mean()
 
             prediction = torch.argmax(logits, dim=1)

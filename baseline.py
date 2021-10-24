@@ -204,7 +204,7 @@ def train(model, task, data):
 
         data_labels = batch["label"].to(DEVICE)
         output, _ = model.forward(args.task, batch)
-        loss = F.cross_entropy(output, data_labels.to(torch.long), reduction="none")
+        loss = F.cross_entropy(output, data_labels.long(), reduction="none")
         loss = loss.mean()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
