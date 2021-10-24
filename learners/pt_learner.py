@@ -1,4 +1,3 @@
-from random import randint
 import torch
 
 
@@ -33,30 +32,38 @@ def pt_learner(model, queue, criterion, optim, args, device):
     queue_length = len(queue)
     losses = 0
 
-    j = randint(0, queue_length - 1)
+    support_features = []
+    support_labels = []
 
-    features = []
-    labels = []
+    query_outputs = []
+    query_features = []
+    query_labels = []
 
     # model.eval()
     # with torch.no_grad():
-    for i in range(queue_length):
-        support_data = queue[i]["batch"]["support"]
-        support_task = queue[i]["task"]
-        _, support_features = model.forward(support_task, support_data, classify=False)
-        features.append(support_features)
-        labels.append(support_data["label"])
+    for item in queue:
+        task = item["task"]
+        support_data = item["batch"]["support"]
+        query_data = item["batch"]["query"]
 
-    features = torch.cat(features)
-    labels = torch.cat(labels).to(device)
-    prototypes = compute_prototypes(features, labels)
+        _, features = model.forward(task, support_data, classify=False)
+        support_features.append(features)
 
-    query_data = queue[j]["batch"]["query"]
-    query_task = queue[j]["task"]
+        outputs, features = model.forward(task, query_data)
+        query_outputs.append(outputs)
+        query_features.append(features)
 
-    query_outputs, query_features = model.forward(query_task, query_data)
+        support_labels.append(support_data["label"])
+        query_labels.append(query_data["label"])
 
-    query_labels = query_data["label"].to(device)
+    support_features = torch.cat(support_features)
+    support_labels = torch.cat(support_labels).to(device)
+
+    query_outputs = torch.cat(query_outputs)
+    query_features = torch.cat(query_features)
+    query_labels = torch.cat(query_labels).to(device)
+
+    prototypes = compute_prototypes(support_features, support_labels)
 
     loss = criterion(query_features, query_outputs, query_labels, prototypes)
     loss.backward()
