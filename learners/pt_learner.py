@@ -29,9 +29,6 @@ def pt_learner(model, queue, criterion, optim, args, device):
     model.train()
     optim.zero_grad()
 
-    queue_length = len(queue)
-    losses = 0
-
     support_features = []
     support_labels = []
 
@@ -67,9 +64,8 @@ def pt_learner(model, queue, criterion, optim, args, device):
 
     loss = criterion(query_features, query_outputs, query_labels, prototypes)
     loss.backward()
-    losses += loss.detach().item()
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
     optim.step()
 
-    return losses / queue_length
+    return loss.detach().item()
 
