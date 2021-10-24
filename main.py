@@ -153,8 +153,8 @@ def evaluate(model, task, data, device):
             output, _ = model.forward(task, batch)
             data_labels = batch["label"].to(device)
             loss = F.cross_entropy(output, data_labels.long(), reduction="none")
-            loss = loss.mean()
-            total_loss += loss.detach().item()
+            loss = loss.detach().item().mean()
+            total_loss += loss
         total_loss /= len(data)
         return total_loss
 
@@ -421,6 +421,8 @@ def main():
 
                 if args.scheduler:
                     scheduler.step()
+
+                gc.collect()
 
     except KeyboardInterrupt:
         print("skipping training")
