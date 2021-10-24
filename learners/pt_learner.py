@@ -67,6 +67,8 @@ def pt_learner(model, queue, criterion, optim, args, device):
     # loss.backward()
     scaler.scale(loss).backward()
     losses += loss.detach().item()
+
+    scaler.unscale_(optim)
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
     # optim.step()
     scaler.step(optim)
