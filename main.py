@@ -13,7 +13,7 @@ from losses import CPELoss
 # from samplers.reptile_sampler import TaskSampler
 # from learners.reptile_learner import reptile_learner
 from samplers.pt_sampler import TaskSampler
-from learners.pt_learner import pt_learner
+from learners.pt_learner import PtLearner
 
 
 from utils.logger import Logger
@@ -58,16 +58,8 @@ parser.add_argument(
 )
 
 parser.add_argument("--sc_labels", type=int, default=3, help="")
-parser.add_argument("--qa_labels", type=int, default=2, help="")
-parser.add_argument("--tc_labels", type=int, default=10, help="")
-parser.add_argument("--po_labels", type=int, default=18, help="")
-parser.add_argument("--pa_labels", type=int, default=2, help="")
 
-parser.add_argument("--qa_batch_size", type=int, default=8, help="batch size")
-parser.add_argument("--sc_batch_size", type=int, default=32, help="batch size")  # 32
-parser.add_argument("--tc_batch_size", type=int, default=32, help="batch size")
-parser.add_argument("--po_batch_size", type=int, default=32, help="batch_size")
-parser.add_argument("--pa_batch_size", type=int, default=8, help="batch size")
+parser.add_argument("--sc_batch_size", type=int, default=32, help="batch size")
 
 parser.add_argument("--task_per_queue", type=int, default=8, help="")
 parser.add_argument(
@@ -316,6 +308,8 @@ def main():
         "pa": float("inf"),
     }
 
+    pt_learner = PtLearner(model, criterion, optim, DEVICE)
+
     try:
         for epoch_item in range(args.start_epoch, args.epochs):
             print(
@@ -341,7 +335,7 @@ def main():
 
                 ## == train ===================
                 # loss = reptile_learner(model, queue, optim, miteration_item, args)
-                loss = pt_learner(model, queue, criterion, optim, args, device=DEVICE)
+                loss = pt_learner.train(queue, miteration_item, args)
                 train_loss += loss
 
                 ## == validation ==============
@@ -391,8 +385,6 @@ def main():
 
     except KeyboardInterrupt:
         print("skipping training")
-        print("Saving new last model...")
-        torch.save(model, os.path.join(args.save, "model_last.pt"))
 
     print("Saving new last model...")
     torch.save(model, os.path.join(args.save, "model_last.pt"))

@@ -27,28 +27,48 @@ def compute_prototypes(
     )
 
 
-def pt_learner(model, queue, criterion, optim, args, device):
-    model.train()
-    optim.zero_grad()
+class PtLearner:
+    def __init__(self, model, criterion, optim, device):
+        self.model = model
+        self.criterion = criterion
+        self.optim = optim
+        self.device = device
 
-    queue_len = len(queue)
-    support_len = queue_len * args.shot * args.ways
+        self.prototypes = None
 
-    data = {
-        "input_ids": torch.cat([item["input_ids"] for item in queue]),
-        "attention_mask": torch.cat([item["attention_mask"] for item in queue]),
-    }
-    labels = torch.cat([item["label"] for item in queue]).to(device)
+    def train(self, queue, iteration, args):
+        self.model.train()
+        self.optim.zero_grad()
 
-    outputs, features = model.forward(data)
+        queue_len = len(queue)
+        support_len = queue_len * args.shot * args.ways
 
-    prototypes = compute_prototypes(features[:support_len], labels[:support_len])
+        data = {
+            "input_ids": torch.cat([item["input_ids"] for item in queue]),
+            "attention_mask": torch.cat([item["attention_mask"] for item in queue]),
+        }
+        labels = torch.cat([item["label"] for item in queue]).to(self.device)
 
-    loss = criterion(
-        features[support_len:], outputs[support_len:], labels[support_len:], prototypes,
-    )
-    loss.backward()
-    torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
-    optim.step()
+        outputs, features = self.model.forward(data)
+        new_prototypes = compute_prototypes(
+            features[:support_len], labels[:support_len]
+        )
 
-    return loss.detach().item()
+        beta = args.beta * iteration / args.meta_iteration
+
+        if iteration > 1 and beta > 0.0:
+            self.prototypes = beta * self.prototypes + (1 - beta) * new_prototypes
+        else:
+            self.prototypes = new_prototypes
+
+        loss = self.criterion(
+            features[support_len:],
+            outputs[support_len:],
+            labels[support_len:],
+            self.prototypes,
+        )
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), args.grad_clip)
+        self.optim.step()
+
+        return loss.detach().item()
