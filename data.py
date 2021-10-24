@@ -156,7 +156,6 @@ class CorpusSC(Dataset):
                 return_tensors="pt",
             )
             input_ids = ids["input_ids"]
-            print("input_ids_dtype: ", input_ids.dtype)
             attention_mask = ids["attention_mask"].to(torch.bool)
             token_type_ids = ids["token_type_ids"].to(torch.bool)
 
