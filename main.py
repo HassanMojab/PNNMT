@@ -153,7 +153,7 @@ def evaluate(model, task, data, device):
             output, _ = model.forward(task, batch)
             data_labels = batch["label"].to(device)
             loss = F.cross_entropy(output, data_labels.long(), reduction="none")
-            loss = loss.detach().item().mean()
+            loss = loss.detach().mean().item()
             total_loss += loss
         total_loss /= len(data)
         return total_loss
