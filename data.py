@@ -35,7 +35,6 @@ class CorpusQA(Dataset):
                 [
                     "input_ids",
                     "attention_mask",
-                    "token_type_ids",
                     "answer_start",
                     "answer_end",
                 ]
@@ -91,9 +90,8 @@ class CorpusQA(Dataset):
         return {
             "input_ids": self.dataset[id][0],
             "attention_mask": self.dataset[id][1],
-            "token_type_ids": self.dataset[id][2],
-            "answer_start": self.dataset[id][3],
-            "answer_end": self.dataset[id][4],
+            "answer_start": self.dataset[id][2],
+            "answer_end": self.dataset[id][3],
         }
 
 
@@ -132,7 +130,6 @@ class CorpusSC(Dataset):
 
         labels = []
         input_ids = []
-        token_type_ids = []
         attention_mask = []
 
         if file == "csv":
@@ -157,7 +154,6 @@ class CorpusSC(Dataset):
             )
             input_ids = ids["input_ids"]
             attention_mask = ids["attention_mask"].bool()
-            token_type_ids = ids["token_type_ids"].bool()
 
             labels = torch.tensor(
                 [self.label_dict[label] for label in label_list], dtype=torch.uint8
@@ -179,22 +175,19 @@ class CorpusSC(Dataset):
                     ):
                         continue
 
-                    input_ids, token_type_ids, attention_mask = self.encode(
+                    input_ids, attention_mask = self.encode(
                         sentence1_tokenized, sentence2_tokenized
                     )
                     labels.append(self.label_dict[label])
                     input_ids.append(torch.unsqueeze(input_ids, dim=0))
-                    token_type_ids.append(torch.unsqueeze(token_type_ids, dim=0))
                     attention_mask.append(torch.unsqueeze(attention_mask, dim=0))
 
             labels = torch.tensor(labels)
             input_ids = torch.cat(input_ids, dim=0)
-            token_type_ids = torch.cat(token_type_ids, dim=0)
             attention_mask = torch.cat(attention_mask, dim=0)
 
         dataset = {
             "input_ids": input_ids,
-            "token_type_ids": token_type_ids,
             "attention_mask": attention_mask,
             "label": labels,
         }
@@ -248,7 +241,6 @@ class CorpusSC(Dataset):
     def __getitem__(self, id):
         return {
             "input_ids": self.data["input_ids"][id],
-            "token_type_ids": self.data["token_type_ids"][id],
             "attention_mask": self.data["attention_mask"][id],
             "label": self.data["label"][id],
         }

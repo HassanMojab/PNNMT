@@ -48,7 +48,6 @@ def evaluateQA(model, corpus, task, path):
             inputs = {
                 "input_ids": batch[0],
                 "attention_mask": batch[1],
-                "token_type_ids": batch[2],
                 "answer_start": None,
                 "answer_end": None,
             }
