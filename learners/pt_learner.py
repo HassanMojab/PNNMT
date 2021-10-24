@@ -69,4 +69,9 @@ class PtLearner:
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
         optim.step()
 
+        if beta > 0.0:
+            self.prototypes = self.prototypes.detach()
+        else:
+            self.prototypes = None
+
         return loss.detach().item()
