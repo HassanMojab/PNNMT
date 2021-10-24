@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
-from data import CorpusQA, CorpusSC
+from data import CorpusSC
 from model import BertMetaLearning
 from datapath import loc, get_loc
 
@@ -18,10 +18,7 @@ from learners.pt_learner import pt_learner
 
 from utils.logger import Logger
 
-from transformers import (
-    AdamW,
-    get_linear_schedule_with_warmup,
-)
+from transformers import AdamW
 
 logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
 warnings.filterwarnings("ignore")
@@ -146,11 +143,11 @@ list_of_tasks = list(set(list_of_tasks))
 print(list_of_tasks)
 
 
-def evaluate(model, task, data, device):
+def evaluate(model, data, device):
     with torch.no_grad():
         total_loss = 0.0
         for batch in data:
-            output, _ = model.forward(task, batch)
+            output, _ = model.forward(batch)
             data_labels = batch["label"].to(device)
             loss = F.cross_entropy(output, data_labels.long(), reduction="none")
             loss = loss.detach().mean().item()
@@ -164,7 +161,7 @@ def evaluateMeta(model, dev_loaders, device):
     total_loss = 0
     model.eval()
     for i, task in enumerate(list_of_tasks):
-        loss = evaluate(model, task, dev_loaders[i], device)
+        loss = evaluate(model, dev_loaders[i], device)
         loss_dict[task] = loss
         total_loss += loss
     return loss_dict, total_loss
@@ -183,30 +180,17 @@ def main():
     # trg_train_corpus = None
     # trg_dev_corpus = None
     # trg_batch_size = 32
-    # if "qa" in k:
-    #     trg_train_corpus = CorpusQA(
-    #         *get_loc("train", k, args.data_dir),
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_dev_corpus = CorpusQA(
-    #         *get_loc("dev", k, args.data_dir),
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_batch_size = args.qa_batch_size
-    # elif "sc" in k:
-    #     trg_train_corpus = CorpusSC(
-    #         *get_loc("train", k, args.data_dir),
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_dev_corpus = CorpusSC(
-    #         *get_loc("dev", k, args.data_dir),
-    #         model_name=args.model_name,
-    #         local_files_only=args.local_model,
-    #     )
-    #     trg_batch_size = args.sc_batch_size
+    # trg_train_corpus = CorpusSC(
+    #     *get_loc("train", k, args.data_dir),
+    #     model_name=args.model_name,
+    #     local_files_only=args.local_model,
+    # )
+    # trg_dev_corpus = CorpusSC(
+    #     *get_loc("dev", k, args.data_dir),
+    #     model_name=args.model_name,
+    #     local_files_only=args.local_model,
+    # )
+    # trg_batch_size = args.sc_batch_size
 
     # trg_train_sampler = TaskSampler(
     #     trg_train_corpus,
@@ -236,34 +220,18 @@ def main():
     for k in list_of_tasks:
         train_corpus = None
         dev_corpus = None
-        batch_size = 32
 
-        if "qa" in k:
-            train_corpus = CorpusQA(
-                *get_loc("train", k, args.data_dir),
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            dev_corpus = CorpusQA(
-                *get_loc("dev", k, args.data_dir),
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            batch_size = args.qa_batch_size
-        elif "sc" in k:
-            train_corpus = CorpusSC(
-                *get_loc("train", k, args.data_dir),
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            dev_corpus = CorpusSC(
-                *get_loc("dev", k, args.data_dir),
-                model_name=args.model_name,
-                local_files_only=args.local_model,
-            )
-            batch_size = args.sc_batch_size
-        else:
-            continue
+        train_corpus = CorpusSC(
+            *get_loc("train", k, args.data_dir),
+            model_name=args.model_name,
+            local_files_only=args.local_model,
+        )
+        dev_corpus = CorpusSC(
+            *get_loc("dev", k, args.data_dir),
+            model_name=args.model_name,
+            local_files_only=args.local_model,
+        )
+        batch_size = args.sc_batch_size
 
         train_sampler = TaskSampler(
             train_corpus,  # TODO: is it necessary to pass the whole data??
@@ -363,10 +331,7 @@ def main():
             for miteration_item in range(args.meta_iteration):
 
                 # == Data preparation ===========
-                queue = [
-                    {"batch": next(train_loader_iterations[i]), "task": task}
-                    for i, task in enumerate(list_of_tasks)
-                ]
+                queue = [next(trainloader) for trainloader in train_loader_iterations]
                 # trg_queue = [
                 #     {
                 #         "batch": next(trg_train_loader_iteration),

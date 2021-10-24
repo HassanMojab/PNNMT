@@ -5,7 +5,7 @@ import pickle5 as pickle
 
 import numpy as np
 from torch.utils.data import DataLoader
-from data import CorpusQA, CorpusSC
+from data import CorpusSC
 from utils.utils import evaluateQA, evaluateNLI, evaluateNER, evaluatePOS, evaluatePA
 from utils.logger import Logger
 from model import BertMetaLearning
@@ -106,41 +106,22 @@ DEVICE = torch.device("cuda" if args.cuda else "cpu")
 
 
 def load_data(task_lang):
-    task = task_lang.split("_")[0]
-    if task == "qa":
-        train_corpus = CorpusQA(
-            *get_loc("train", task_lang, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model
-        )
-        dev_corpus = CorpusQA(
-            *get_loc("dev", task_lang, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model
-        )
-        test_corpus = CorpusQA(
-            *get_loc("test", task_lang, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model
-        )
-        batch_size = args.qa_batch_size
-    elif task == "sc":
-        train_corpus = CorpusSC(
-            *get_loc("train", task_lang, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model
-        )
-        dev_corpus = CorpusSC(
-            *get_loc("dev", task_lang, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model
-        )
-        test_corpus = CorpusSC(
-            *get_loc("test", task_lang, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model
-        )
-        batch_size = args.sc_batch_size
+    train_corpus = CorpusSC(
+        *get_loc("train", task_lang, args.data_dir),
+        model_name=args.model_name,
+        local_files_only=args.local_model
+    )
+    dev_corpus = CorpusSC(
+        *get_loc("dev", task_lang, args.data_dir),
+        model_name=args.model_name,
+        local_files_only=args.local_model
+    )
+    test_corpus = CorpusSC(
+        *get_loc("test", task_lang, args.data_dir),
+        model_name=args.model_name,
+        local_files_only=args.local_model
+    )
+    batch_size = args.sc_batch_size
 
     return train_corpus, dev_corpus, test_corpus, batch_size
 

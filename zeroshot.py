@@ -2,7 +2,7 @@ import os, json, argparse, torch, logging, warnings, sys
 
 import numpy as np
 from torch.utils.data import DataLoader
-from data import CorpusQA, CorpusSC
+from data import CorpusSC
 from utils.utils import evaluateQA, evaluateNLI, evaluateNER, evaluatePOS, evaluatePA
 from utils.logger import Logger
 from model import BertMetaLearning
@@ -90,21 +90,12 @@ DEVICE = torch.device("cuda" if args.cuda else "cpu")
 
 
 def load_data(task_lang):
-    [task, lang] = task_lang.split("_")
-    if task == "qa":
-        test_corpus = CorpusQA(
-            *get_loc("test", task_lang, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model
-        )
-        batch_size = args.qa_batch_size
-    elif task == "sc":
-        test_corpus = CorpusSC(
-            *get_loc("test", task_lang, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model
-        )
-        batch_size = args.sc_batch_size
+    test_corpus = CorpusSC(
+        *get_loc("test", task_lang, args.data_dir),
+        model_name=args.model_name,
+        local_files_only=args.local_model
+    )
+    batch_size = args.sc_batch_size
 
     return test_corpus, batch_size
 

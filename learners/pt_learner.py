@@ -15,6 +15,8 @@ def compute_prototypes(
   """
     seen_labels = torch.unique(support_labels)
 
+    # TODO: does it need to sort by labels??
+
     # Prototype i is the mean of all instances of features corresponding to labels == i
     return torch.cat(
         [
@@ -27,37 +29,33 @@ def compute_prototypes(
 
 
 def pt_learner(model, queue, criterion, optim, args, device):
-    support_features = []
-    support_labels = []
-
-    model.eval()
-    with torch.no_grad():
-        for item in queue:
-            task = item["task"]
-            support_data = item["batch"]["support"]
-
-            _, features = model.forward(task, support_data, classify=False)
-            support_features.append(features)
-            support_labels.append(support_data["label"])
-
-        support_features = torch.cat(support_features)
-        support_labels = torch.cat(support_labels).to(device)
-        prototypes = compute_prototypes(support_features, support_labels)
-
     model.train()
     optim.zero_grad()
+
+    support_features = []
+    support_labels = []
 
     query_outputs = []
     query_features = []
     query_labels = []
-    for item in queue:
-        task = item["task"]
-        query_data = item["batch"]["query"]
 
-        outputs, features = model.forward(task, query_data)
+    for item in queue:
+        support_data = item["support"]
+        query_data = item["query"]
+
+        _, features = model.forward(support_data, classify=False)
+        support_features.append(features)
+
+        outputs, features = model.forward(query_data)
         query_outputs.append(outputs)
         query_features.append(features)
+
+        support_labels.append(support_data["label"])
         query_labels.append(query_data["label"])
+
+    support_features = torch.cat(support_features)
+    support_labels = torch.cat(support_labels).to(device)
+    prototypes = compute_prototypes(support_features, support_labels)
 
     query_outputs = torch.cat(query_outputs)
     query_features = torch.cat(query_features)

@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import logging
 from torch.utils.data import DataLoader
-from data import CorpusQA, CorpusSC
+from data import CorpusSC
 from utils.utils import evaluateQA, evaluateNLI, evaluateNER, evaluatePOS, evaluatePA
 import os
 
@@ -62,10 +62,7 @@ print(list_of_tasks)
 test_corpus = {}
 
 for k in list_of_tasks:
-    if "qa" in k:
-        test_corpus[k] = CorpusQA(loc["test"][k][0], loc["test"][k][1])
-    elif "sc" in k:
-        test_corpus[k] = CorpusSC(loc["test"][k][0], loc["test"][k][1])
+    test_corpus[k] = CorpusSC(loc["test"][k][0], loc["test"][k][1])
 
 test_dataloaders = {}
 

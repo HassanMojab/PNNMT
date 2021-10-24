@@ -19,7 +19,7 @@ class BertMetaLearning(nn.Module):
         self.sc_dropout = nn.Dropout(args.dropout)
         self.sc_classifier = nn.Linear(args.hidden_dims, args.sc_labels)
 
-    def forward(self, task, data, classify=True):
+    def forward(self, data, classify=True):
         data["input_ids"] = data["input_ids"].to(self.device)
         data["attention_mask"] = data["attention_mask"].to(self.device)
 
