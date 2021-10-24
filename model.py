@@ -52,4 +52,3 @@ class BertMetaLearning(nn.Module):
         self.sc_dropout = self.sc_dropout.to(*args, **kwargs)
         self.sc_classifier = self.sc_classifier.to(*args, **kwargs)
         return self
-

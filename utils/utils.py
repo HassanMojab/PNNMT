@@ -7,8 +7,6 @@ from transformers.data.metrics.squad_metrics import (
     compute_predictions_logits,
 )
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 class SquadResult(object):
     def __init__(
@@ -236,4 +234,3 @@ def evaluateRC(model, data, device):
         total_loss /= len(data)
 
         return total_loss, correct / total
-

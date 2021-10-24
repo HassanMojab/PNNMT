@@ -103,4 +103,3 @@ class TaskSampler(Sampler):
         }
 
         return data
-
