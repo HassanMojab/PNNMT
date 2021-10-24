@@ -32,6 +32,8 @@ def pt_learner(model, queue, criterion, optim, args, device):
     optim.zero_grad()
 
     queue_len = len(queue)
+    support_len = queue_len * args.shot
+    print("support_len: ", support_len)
 
     data = {
         "input_ids": torch.cat(
@@ -48,17 +50,19 @@ def pt_learner(model, queue, criterion, optim, args, device):
         + [item["query"]["label"] for item in queue]
     ).to(device)
 
+    print(data["input_ids"].shape)
+    print(data["attention_mask"].shape)
+    print("labels shape: ", labels.shape)
+
     outputs, features = model.forward(data)
 
-    prototypes = compute_prototypes(
-        features[: queue_len * args.shot], labels[: queue_len * args.shot]
-    )
+    print(outputs.shape)
+    print(features.shape)
+
+    prototypes = compute_prototypes(features[:support_len], labels[:support_len])
 
     loss = criterion(
-        features[queue_len * args.shot :],
-        outputs[queue_len * args.shot :],
-        labels[queue_len * args.shot :],
-        prototypes,
+        features[support_len:], outputs[support_len:], labels[support_len:], prototypes,
     )
 
     # support_features = []
