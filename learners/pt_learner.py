@@ -28,17 +28,16 @@ def compute_prototypes(
 
 
 class PtLearner:
-    def __init__(self, model, criterion, optim, device):
+    def __init__(self, model, criterion, device):
         self.model = model
         self.criterion = criterion
-        self.optim = optim
         self.device = device
 
         self.prototypes = None
 
-    def train(self, queue, iteration, args):
+    def train(self, queue, optim, iteration, args):
         self.model.train()
-        self.optim.zero_grad()
+        optim.zero_grad()
 
         queue_len = len(queue)
         support_len = queue_len * args.shot * args.ways
@@ -69,6 +68,6 @@ class PtLearner:
         )
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), args.grad_clip)
-        self.optim.step()
+        optim.step()
 
         return loss.detach().item()
