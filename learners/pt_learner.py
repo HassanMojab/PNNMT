@@ -40,28 +40,29 @@ def pt_learner(model, queue, criterion, optim, args, device):
     features = []
     labels = []
 
-    with torch.cuda.amp.autocast():
-        # model.eval()
-        # with torch.no_grad():
-        for i in range(queue_length):
-            support_data = queue[i]["batch"]["support"]
-            support_task = queue[i]["task"]
+    # model.eval()
+    # with torch.no_grad():
+    for i in range(queue_length):
+        support_data = queue[i]["batch"]["support"]
+        support_task = queue[i]["task"]
+        with torch.cuda.amp.autocast():
             _, support_features = model.forward(
                 support_task, support_data, classify=False
             )
-            features.append(support_features)
-            labels.append(support_data["label"])
+        features.append(scaler.scale(support_features))
+        labels.append(support_data["label"])
 
-        features = torch.cat(features)
-        labels = torch.cat(labels).to(device)
-        prototypes = compute_prototypes(features, labels)
+    features = torch.cat(features)
+    labels = torch.cat(labels).to(device)
+    prototypes = compute_prototypes(features, labels)
 
-        query_data = queue[j]["batch"]["query"]
-        query_task = queue[j]["task"]
+    query_data = queue[j]["batch"]["query"]
+    query_task = queue[j]["task"]
+
+    query_labels = query_data["label"].to(device)
+
+    with torch.cuda.amp.autocast():
         query_outputs, query_features = model.forward(query_task, query_data)
-
-        query_labels = query_data["label"].to(device)
-
         loss = criterion(query_features, query_outputs, query_labels, prototypes)
 
     # loss.backward()
