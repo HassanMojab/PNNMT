@@ -1,8 +1,6 @@
 from random import randint
 import torch
 
-scaler = torch.cuda.amp.GradScaler()
-
 
 def compute_prototypes(
     support_features: torch.Tensor, support_labels: torch.Tensor
@@ -45,11 +43,8 @@ def pt_learner(model, queue, criterion, optim, args, device):
     for i in range(queue_length):
         support_data = queue[i]["batch"]["support"]
         support_task = queue[i]["task"]
-        with torch.cuda.amp.autocast():
-            _, support_features = model.forward(
-                support_task, support_data, classify=False
-            )
-        features.append(scaler.scale(support_features))
+        _, support_features = model.forward(support_task, support_data, classify=False)
+        features.append(support_features)
         labels.append(support_data["label"])
 
     features = torch.cat(features)
@@ -59,21 +54,15 @@ def pt_learner(model, queue, criterion, optim, args, device):
     query_data = queue[j]["batch"]["query"]
     query_task = queue[j]["task"]
 
+    query_outputs, query_features = model.forward(query_task, query_data)
+
     query_labels = query_data["label"].to(device)
 
-    with torch.cuda.amp.autocast():
-        query_outputs, query_features = model.forward(query_task, query_data)
-        loss = criterion(query_features, query_outputs, query_labels, prototypes)
-
-    # loss.backward()
-    scaler.scale(loss).backward()
+    loss = criterion(query_features, query_outputs, query_labels, prototypes)
+    loss.backward()
     losses += loss.detach().item()
-
-    scaler.unscale_(optim)
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
-    # optim.step()
-    scaler.step(optim)
-    scaler.update()
+    optim.step()
 
     return losses / queue_length
 
