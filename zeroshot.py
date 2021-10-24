@@ -1,9 +1,9 @@
-import os, json, argparse, torch, logging, warnings, sys
+import os, argparse, torch, logging, warnings, sys
 
 import numpy as np
 from torch.utils.data import DataLoader
 from data import CorpusSC
-from utils.utils import evaluateQA, evaluateNLI, evaluateNER, evaluatePOS, evaluatePA
+from utils.utils import evaluateNLI
 from utils.logger import Logger
 from model import BertMetaLearning
 from datapath import get_loc
@@ -113,27 +113,11 @@ if args.load != "":
 
 def test():
     model.eval()
-    if "qa" in args.task:
-        result = evaluateQA(model, test_corpus, "test_" + args.task, args.save)
-        print("test_f1 {:10.8f}".format(result["f1"]))
-        with open(os.path.join(args.save, "test.json"), "w") as outfile:
-            json.dump(result, outfile)
-        test_loss = -result["f1"]
-    elif "sc" in args.task:
-        test_loss, test_acc, matrix = evaluateNLI(
-            model, test_dataloader, DEVICE, return_matrix=True
-        )
-        print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
-        print("confusion matrix:\n", matrix)
-    elif "tc" in args.task:
-        test_loss, test_acc = evaluateNER(model, test_dataloader, DEVICE)
-        print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
-    elif "po" in args.task:
-        test_loss, test_acc = evaluatePOS(model, test_dataloader, DEVICE)
-        print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
-    elif "pa" in args.task:
-        test_loss, test_acc = evaluatePA(model, test_dataloader, DEVICE)
-        print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
+    test_loss, test_acc, matrix = evaluateNLI(
+        model, test_dataloader, DEVICE, return_matrix=True
+    )
+    print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
+    print("confusion matrix:\n", matrix)
     return test_loss
 
 

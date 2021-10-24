@@ -1,4 +1,4 @@
-import os, json, argparse, time, torch, logging, warnings, sys
+import os, argparse, time, torch, logging, warnings, sys
 
 import torch.nn.functional as F
 import pickle5 as pickle
@@ -6,7 +6,7 @@ import pickle5 as pickle
 import numpy as np
 from torch.utils.data import DataLoader
 from data import CorpusSC
-from utils.utils import evaluateQA, evaluateNLI, evaluateNER, evaluatePOS, evaluatePA
+from utils.utils import evaluateNLI
 from utils.logger import Logger
 from model import BertMetaLearning
 from datapath import get_loc
@@ -175,7 +175,7 @@ scheduler = get_linear_schedule_with_warmup(
 )
 
 
-def train(model, task, data):
+def train(model, data):
     to_return = 0.0
     total_loss = 0.0
     t1 = time.time()
@@ -184,7 +184,7 @@ def train(model, task, data):
         optim.zero_grad()
 
         data_labels = batch["label"].to(DEVICE)
-        output, _ = model.forward(args.task, batch)
+        output, _ = model.forward(batch)
         loss = F.cross_entropy(output, data_labels.long(), reduction="none")
         loss = loss.mean()
         loss.backward()
@@ -218,77 +218,23 @@ def train(model, task, data):
 
 def test():
     model.eval()
-    if "qa" in args.task:
-        result = evaluateQA(model, test_corpus, "test_" + args.task, args.save)
-        print("test_f1 {:10.8f}".format(result["f1"]))
-        with open(os.path.join(args.save, "test.json"), "w") as outfile:
-            json.dump(result, outfile)
-        test_loss = -result["f1"]
-    elif "sc" in args.task:
-        test_loss, test_acc, matrix = evaluateNLI(
-            model, test_dataloader, DEVICE, return_matrix=True
-        )
-        print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
-        print("confusion matrix:\n", matrix)
-    elif "tc" in args.task:
-        test_loss, test_acc = evaluateNER(model, test_dataloader, DEVICE)
-        print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
-    elif "po" in args.task:
-        test_loss, test_acc = evaluatePOS(model, test_dataloader, DEVICE)
-        print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
-    elif "pa" in args.task:
-        test_loss, test_acc = evaluatePA(model, test_dataloader, DEVICE)
-        print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
+    test_loss, test_acc, matrix = evaluateNLI(
+        model, test_dataloader, DEVICE, return_matrix=True
+    )
+    print("test_loss {:10.8f} test_acc {:6.4f}".format(test_loss, test_acc))
+    print("confusion matrix:\n", matrix)
     return test_loss
 
 
 def evaluate(ep, train_loss):
     model.eval()
-    if "qa" in args.task:
-        result = evaluateQA(model, dev_corpus, "val_" + args.task, args.save)
-        with open(os.path.join(args.save, "val_" + str(ep) + ".json"), "w") as outfile:
-            json.dump(result, outfile)
-        val_f1 = result["f1"]
-        print(
-            "epoch {:d} val_f1 {:10.8f} train_loss {:10.8f}".format(
-                ep, val_f1, train_loss
-            )
+    val_loss, val_acc = evaluateNLI(model, dev_dataloader, DEVICE)
+    print(
+        "epoch {:d} val_loss {:10.8f} val_acc {:6.4f} train_loss {:10.8f}".format(
+            ep, val_loss, val_acc, train_loss
         )
-        logger["val_loss"].append(val_f1)
-        val_loss = -val_f1
-        val_acc = val_f1
-    elif "sc" in args.task:
-        val_loss, val_acc = evaluateNLI(model, dev_dataloader, DEVICE)
-        print(
-            "epoch {:d} val_loss {:10.8f} val_acc {:6.4f} train_loss {:10.8f}".format(
-                ep, val_loss, val_acc, train_loss
-            )
-        )
-        logger["val_loss"].append(val_loss)
-    elif "pa" in args.task:
-        val_loss, val_acc = evaluatePA(model, dev_dataloader, DEVICE)
-        print(
-            "epoch {:d} val_loss {:10.8f} val_acc {:6.4f} train_loss {:10.8f}".format(
-                ep, val_loss, val_acc, train_loss
-            )
-        )
-        logger["val_loss"].append(val_loss)
-    elif "tc" in args.task:
-        val_loss, val_acc = evaluateNER(model, dev_dataloader, DEVICE)
-        print(
-            "epoch {:d} val_loss {:10.8f} val_acc {:6.4f} train_loss {:10.8f}".format(
-                ep, val_loss, val_acc, train_loss
-            )
-        )
-        logger["val_loss"].append(val_loss)
-    elif "po" in args.task:
-        val_loss, val_acc = evaluatePOS(model, dev_dataloader, DEVICE)
-        print(
-            "epoch {:d} val_loss {:10.8f} val_acc {:6.4f} train_loss {:10.8f}".format(
-                ep, val_loss, val_acc, train_loss
-            )
-        )
-        logger["val_loss"].append(val_loss)
+    )
+    logger["val_loss"].append(val_loss)
     logger["train_loss"].append(train_loss)
     return val_loss, val_acc
 
@@ -305,7 +251,7 @@ def main():
 
         for ep in range(args.epochs):
             model.train()
-            train_loss = train(model, args.task, train_dataloader)
+            train_loss = train(model, train_dataloader)
             val_loss, val_acc = evaluate(ep, train_loss)
 
             if (

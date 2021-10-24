@@ -1,4 +1,3 @@
-import gc
 import torch
 
 
@@ -38,6 +37,10 @@ def pt_learner(model, queue, criterion, optim, args, device):
     query_outputs = []
     query_features = []
     query_labels = []
+
+    support_data_list = [item["support"] for item in queue]
+    query_data_list = [item["query"] for item in queue]
+    torch.cat
 
     for item in queue:
         support_data = item["support"]

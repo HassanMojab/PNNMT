@@ -251,13 +251,13 @@ sampler = UniformBatchSampler()
 print(sampler.init_p)
 
 
-def evaluate(model, task, data):
+def evaluate(model, data):
     with torch.no_grad():
         total_loss = 0.0
         correct = 0.0
         total = 0.0
         for j, batch in enumerate(data):
-            output = model.forward(task, batch)
+            output = model.forward(batch)
             loss = output[0].mean()
             total_loss += loss.item()
         total_loss /= len(data)
@@ -269,15 +269,15 @@ def evaluateMeta(model):
     total_loss = 0
     model.eval()
     for task in list_of_tasks:
-        loss = evaluate(model, task, dev_dataloaders[task])
+        loss = evaluate(model, dev_dataloaders[task])
         loss_dict[task] = loss
         total_loss += loss
     return loss_dict, total_loss
 
 
-def train(model, task, batch):
+def train(model, batch):
     optim.zero_grad()
-    output = model.forward(task, batch)
+    output = model.forward(batch)
     loss = output[0].mean()
     loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
@@ -310,7 +310,7 @@ def main():
     try:
         for ep in range(args.meta_epochs):
             for j, batch in enumerate(sampler):
-                train(model, batch["task"], batch["data"])
+                train(model, batch["data"])
 
                 if (j + 1) % args.log_interval == 0:
 
