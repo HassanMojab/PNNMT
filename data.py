@@ -32,12 +32,7 @@ class CorpusQA(Dataset):
         self.data = {
             key: self.dataset[:][i]
             for i, key in enumerate(
-                [
-                    "input_ids",
-                    "attention_mask",
-                    "answer_start",
-                    "answer_end",
-                ]
+                ["input_ids", "attention_mask", "answer_start", "answer_end",]
             )
         }
 
@@ -153,7 +148,7 @@ class CorpusSC(Dataset):
                 return_tensors="pt",
             )
             input_ids = ids["input_ids"]
-            attention_mask = ids["attention_mask"].bool()
+            attention_mask = ids["attention_mask"]
 
             labels = torch.tensor(
                 [self.label_dict[label] for label in label_list], dtype=torch.uint8
