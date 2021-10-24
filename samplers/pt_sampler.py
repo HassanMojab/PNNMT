@@ -89,17 +89,15 @@ class TaskSampler(Sampler):
             tensor = tensor.reshape(
                 (self.n_way, (self.n_shot + self.n_query), *tensor.shape[1:])
             )
-            tensor = [
-                split.flatten(end_dim=1)
-                for split in torch.split(tensor, [self.n_shot, self.n_query], dim=1)
-            ]
+            tensor = torch.cat(
+                [
+                    split.flatten(end_dim=1)
+                    for split in torch.split(tensor, [self.n_shot, self.n_query], dim=1)
+                ]
+            )
 
             return tensor
 
         data = {k: split_tensor(v) for k, v in input_data.items()}
-        data = {
-            key: {k: v[j] for k, v in data.items()}
-            for j, key in enumerate(["support", "query"])
-        }
 
         return data

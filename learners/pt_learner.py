@@ -35,19 +35,10 @@ def pt_learner(model, queue, criterion, optim, args, device):
     support_len = queue_len * args.shot * args.ways
 
     data = {
-        "input_ids": torch.cat(
-            [item["support"]["input_ids"] for item in queue]
-            + [item["query"]["input_ids"] for item in queue]
-        ),
-        "attention_mask": torch.cat(
-            [item["support"]["attention_mask"] for item in queue]
-            + [item["query"]["attention_mask"] for item in queue]
-        ),
+        "input_ids": torch.cat([item["input_ids"] for item in queue]),
+        "attention_mask": torch.cat([item["attention_mask"] for item in queue]),
     }
-    labels = torch.cat(
-        [item["support"]["label"] for item in queue]
-        + [item["query"]["label"] for item in queue]
-    ).to(device)
+    labels = torch.cat([item["label"] for item in queue]).to(device)
 
     outputs, features = model.forward(data)
 
@@ -56,37 +47,6 @@ def pt_learner(model, queue, criterion, optim, args, device):
     loss = criterion(
         features[support_len:], outputs[support_len:], labels[support_len:], prototypes,
     )
-
-    # support_features = []
-    # support_labels = []
-
-    # query_outputs = []
-    # query_features = []
-    # query_labels = []
-
-    # for item in queue:
-    #     support_data = item["support"]
-    #     query_data = item["query"]
-
-    #     _, features = model.forward(support_data, classify=False)
-    #     support_features.append(features)
-
-    #     outputs, features = model.forward(query_data)
-    #     query_outputs.append(outputs)
-    #     query_features.append(features)
-
-    #     support_labels.append(support_data["label"])
-    #     query_labels.append(query_data["label"])
-
-    # support_features = torch.cat(support_features)
-    # support_labels = torch.cat(support_labels).to(device)
-    # prototypes = compute_prototypes(support_features, support_labels)
-
-    # query_outputs = torch.cat(query_outputs)
-    # query_features = torch.cat(query_features)
-    # query_labels = torch.cat(query_labels).to(device)
-
-    # loss = criterion(query_features, query_outputs, query_labels, prototypes)
     loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
     optim.step()
