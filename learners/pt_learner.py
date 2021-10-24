@@ -51,13 +51,13 @@ def pt_learner(model, queue, criterion, optim, args, device):
     outputs, features = model.forward(data)
 
     prototypes = compute_prototypes(
-        features[: len(queue_len * args.shot)], labels[: len(queue_len * args.shot)]
+        features[: queue_len * args.shot], labels[: queue_len * args.shot]
     )
 
     loss = criterion(
-        features[len(queue_len * args.shot) :],
-        outputs[len(queue_len * args.shot) :],
-        labels[len(queue_len * args.shot) :],
+        features[queue_len * args.shot :],
+        outputs[queue_len * args.shot :],
+        labels[queue_len * args.shot :],
         prototypes,
     )
 
