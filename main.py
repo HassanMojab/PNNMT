@@ -159,8 +159,9 @@ def evaluate(model, data, device):
 def evaluateMeta(model, dev_loaders, device):
     loss_dict = {}
     total_loss = 0
+    tasks = [args.target_task] if args.target_task != "" else list_of_tasks
     model.eval()
-    for i, task in enumerate(list_of_tasks):
+    for i, task in enumerate(tasks):
         loss = evaluate(model, dev_loaders[i], device)
         loss_dict[task] = loss
         total_loss += loss
