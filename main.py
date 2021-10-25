@@ -203,7 +203,7 @@ def main():
         )
         train_loaders.append(train_loader)
 
-        if args.target_task != "":
+        if args.target_task == "":
             dev_corpus = CorpusSC(
                 *get_loc("dev", k, args.data_dir),
                 model_name=args.model_name,
