@@ -1,7 +1,6 @@
 import os, argparse, time, torch, logging, warnings, sys
 
 import torch.nn.functional as F
-import pickle5 as pickle
 
 import numpy as np
 from torch.utils.data import DataLoader
@@ -36,16 +35,8 @@ parser.add_argument(
 )
 
 parser.add_argument("--sc_labels", type=int, default=3, help="")
-parser.add_argument("--qa_labels", type=int, default=2, help="")
-parser.add_argument("--tc_labels", type=int, default=10, help="")
-parser.add_argument("--po_labels", type=int, default=18, help="")
-parser.add_argument("--pa_labels", type=int, default=2, help="")
 
-parser.add_argument("--qa_batch_size", type=int, default=8, help="batch size")
 parser.add_argument("--sc_batch_size", type=int, default=32, help="batch size")
-parser.add_argument("--tc_batch_size", type=int, default=32, help="batch size")
-parser.add_argument("--po_batch_size", type=int, default=32, help="batch_size")
-parser.add_argument("--pa_batch_size", type=int, default=8, help="batch size")
 
 parser.add_argument("--epochs", type=int, default=2, help="iterations")
 
@@ -68,8 +59,6 @@ parser.add_argument("--grad_clip", type=float, default=1.0)
 parser.add_argument("--task", type=str, default="qa_hi")
 parser.add_argument("--test", action="store_true")
 
-parser.add_argument("--n_best_size", default=20, type=int)
-parser.add_argument("--max_answer_length", default=30, type=int)
 parser.add_argument(
     "--weight_decay", default=0.0, type=float, help="Weight decay if we apply some."
 )
@@ -79,12 +68,6 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-
-logger = {"args": vars(args)}
-logger["train_loss"] = []
-logger["val_loss"] = []
-logger["val_metric"] = []
-logger["train_metric"] = []
 
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
@@ -234,61 +217,34 @@ def evaluate(ep, train_loss):
             ep, val_loss, val_acc, train_loss
         )
     )
-    logger["val_loss"].append(val_loss)
-    logger["train_loss"].append(train_loss)
     return val_loss, val_acc
 
 
 def main():
-
     try:
         print("*" * 50)
         print("Fine Tuning Stage")
         print("*" * 50)
 
         min_task_loss = float("inf")
-        max_task_acc = 0
 
         for ep in range(args.epochs):
             model.train()
             train_loss = train(model, train_dataloader)
             val_loss, val_acc = evaluate(ep, train_loss)
 
-            if (
-                "tc" in args.task
-                or "sc" in args.task
-                or "rc" in args.task
-                or "pa" in args.task
-            ):
-                logger["val_metric"].append(val_acc)
-
             if val_loss < min_task_loss:
                 print(os.path.join(args.save, args.model_filename))
                 torch.save(model, os.path.join(args.save, args.model_filename))
                 min_task_loss = val_loss
-                if (
-                    "sc" in args.task
-                    or "tc" in args.task
-                    or "rc" in args.task
-                    or "pa" in args.task
-                ):
-                    max_task_acc = val_acc
 
-        with open(os.path.join(args.save, "log.pickle"), "wb") as g:
-            pickle.dump(logger, g)
-
-        print(os.path.join(args.save, "last_" + args.model_filename))
         torch.save(model, os.path.join(args.save, "last_" + args.model_filename))
+        print(os.path.join(args.save, "last_" + args.model_filename))
 
         test()
 
     except KeyboardInterrupt:
-
         print("skipping fine tuning")
-
-        with open(os.path.join(args.save, "log.pickle"), "wb") as g:
-            pickle.dump(logger, g)
-
         test()
 
 
