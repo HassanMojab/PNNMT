@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--num_labels", type=int, default=3, help="number of labels")
 parser.add_argument("--batch_size", type=int, default=32, help="batch size")
-parser.add_argument("--steps", type=int, default=32, help="total steps")
+parser.add_argument("--steps", type=int, default=100, help="total steps")
 parser.add_argument("--seed", type=int, default=0, help="seed for numpy and pytorch")
 parser.add_argument(
     "--log_interval",
@@ -118,8 +118,9 @@ def main():
         legend="full",
         palette=palette,
     )
-    plt.show()
+    plt.show(block=True)
     plt.savefig(os.path.join(args.save, "tsne.png"))
+    print("saveing plot to tsne.png...")
 
 
 if __name__ == "__main__":
