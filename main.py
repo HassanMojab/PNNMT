@@ -74,6 +74,9 @@ parser.add_argument("--start_epoch", type=int, default=0, help="start iterations
 parser.add_argument("--ways", type=int, default=3, help="number of ways")
 parser.add_argument("--shot", type=int, default=4, help="number of shots")
 parser.add_argument("--query_num", type=int, default=4, help="number of queries")
+parser.add_argument(
+    "--target_shot", type=int, default=4, help="number of target queries"
+)
 parser.add_argument("--meta_iteration", type=int, default=3000, help="")
 # ---------------
 
@@ -92,7 +95,7 @@ parser.add_argument("--load", type=str, default="", help="")
 parser.add_argument("--log_file", type=str, default="main_output.txt", help="")
 parser.add_argument("--grad_clip", type=float, default=5.0)
 parser.add_argument("--meta_tasks", type=str, default="sc,pa,qa,tc,po")
-parser.add_argument("--target_task", type=str, default="sc_fa")
+parser.add_argument("--target_task", type=str, default="")
 parser.add_argument("--random_task", action="store_true", help="")
 
 parser.add_argument("--num_workers", type=int, default=0, help="")
@@ -123,6 +126,8 @@ if not os.path.exists(args.save):
 sys.stdout = Logger(os.path.join(args.save, args.log_file))
 print(args)
 
+print("target tasks: ", args.target_task)
+
 task_types = args.meta_tasks.split(",")
 list_of_tasks = []
 
@@ -135,7 +140,7 @@ for tt in task_types:
         list_of_tasks.append(tt)
 
 list_of_tasks = list(set(list_of_tasks))
-print(list_of_tasks)
+print("support tasks: ", list_of_tasks)
 
 
 def evaluate(model, data, device):
@@ -170,64 +175,16 @@ def main():
         torch.cuda.manual_seed_all(args.seed)
     DEVICE = torch.device("cuda" if args.cuda else "cpu")
 
-    ### == target dataset ==============
-    # k = args.target_task
-    # trg_train_corpus = None
-    # trg_dev_corpus = None
-    # trg_batch_size = 32
-    # trg_train_corpus = CorpusSC(
-    #     *get_loc("train", k, args.data_dir),
-    #     model_name=args.model_name,
-    #     local_files_only=args.local_model,
-    # )
-    # trg_dev_corpus = CorpusSC(
-    #     *get_loc("dev", k, args.data_dir),
-    #     model_name=args.model_name,
-    #     local_files_only=args.local_model,
-    # )
-    # trg_batch_size = args.sc_batch_size
-
-    # trg_train_sampler = TaskSampler(
-    #     trg_train_corpus,
-    #     n_way=args.ways,
-    #     n_shot=0,
-    #     # n_query_way=args.query_ways,
-    #     n_query=args.query_num,
-    #     n_tasks=args.meta_iteration,
-    # )
-    # trg_train_loader = DataLoader(
-    #     trg_train_corpus,
-    #     batch_sampler=trg_train_sampler,
-    #     num_workers=args.num_workers,
-    #     pin_memory=True,
-    #     collate_fn=trg_train_sampler.episodic_collate_fn,
-    # )
-    # trg_dev_loader = DataLoader(
-    #     trg_dev_corpus, batch_size=trg_batch_size, pin_memory=True
-    # )
-
-    ### ================================
-
-    ### == auxiliary loader ============
+    ### == data loader ============
     train_loaders = []
     dev_loaders = []
 
     for k in list_of_tasks:
-        train_corpus = None
-        dev_corpus = None
-
         train_corpus = CorpusSC(
             *get_loc("train", k, args.data_dir),
             model_name=args.model_name,
             local_files_only=args.local_model,
         )
-        dev_corpus = CorpusSC(
-            *get_loc("dev", k, args.data_dir),
-            model_name=args.model_name,
-            local_files_only=args.local_model,
-        )
-        batch_size = args.sc_batch_size
-
         train_sampler = TaskSampler(
             train_corpus,  # TODO: is it necessary to pass the whole data??
             n_way=args.ways,
@@ -245,12 +202,50 @@ def main():
         )
         train_loaders.append(train_loader)
 
-        dev_loader = DataLoader(
-            dev_corpus, batch_size=batch_size, pin_memory=args.pin_memory
-        )
-        dev_loaders.append(dev_loader)
+        if args.target_task != "":
+            dev_corpus = CorpusSC(
+                *get_loc("dev", k, args.data_dir),
+                model_name=args.model_name,
+                local_files_only=args.local_model,
+            )
+            dev_loader = DataLoader(
+                dev_corpus, batch_size=args.sc_batch_size, pin_memory=args.pin_memory
+            )
+            dev_loaders.append(dev_loader)
 
         gc.collect()
+
+    if args.target_task != "":
+        ### == target dataset ==============
+        trg_train_corpus = CorpusSC(
+            *get_loc("train", args.target_task, args.data_dir),
+            model_name=args.model_name,
+            local_files_only=args.local_model,
+        )
+        trg_dev_corpus = CorpusSC(
+            *get_loc("dev", args.target_task, args.data_dir),
+            model_name=args.model_name,
+            local_files_only=args.local_model,
+        )
+
+        trg_train_sampler = TaskSampler(
+            trg_train_corpus,
+            n_way=args.ways,
+            n_shot=0,
+            n_query=args.target_shot,
+            n_tasks=args.meta_iteration,
+        )
+        trg_train_loader = DataLoader(
+            trg_train_corpus,
+            batch_sampler=trg_train_sampler,
+            num_workers=args.num_workers,
+            pin_memory=args.pin_memory,
+            collate_fn=trg_train_sampler.episodic_collate_fn,
+        )
+        trg_dev_loader = DataLoader(
+            trg_dev_corpus, batch_size=args.sc_batch_size, pin_memory=args.pin_memory
+        )
+        dev_loaders = [trg_dev_loader]
 
     ### ================================
 
@@ -324,7 +319,10 @@ def main():
             train_loader_iterations = [
                 iter(train_loader) for train_loader in train_loaders
             ]
-            # trg_train_loader_iteration = iter(trg_train_loader)
+
+            if args.target_task != "":
+                trg_train_loader_iteration = iter(trg_train_loader)
+
             for miteration_item in range(args.meta_iteration):
 
                 # == Data preparation ===========
@@ -332,17 +330,19 @@ def main():
                     k = random.randint(0, len(train_loader_iterations) - 1)
                     queue = [next(train_loader_iterations[k])]
                 else:
-                    queue = [next(trainloader) for trainloader in train_loader_iterations]
-                # trg_queue = [
-                #     {
-                #         "batch": next(trg_train_loader_iteration),
-                #         "task": args.target_task,
-                #     }
-                # ]
+                    queue = [
+                        next(trainloader) for trainloader in train_loader_iterations
+                    ]
+
+                trg_queue = []
+                if args.target_task != "":
+                    trg_queue = [next(trg_train_loader_iteration)]
 
                 ## == train ===================
                 # loss = reptile_learner(model, queue, optim, miteration_item, args)
-                loss = pt_learner.train(model, queue, optim, miteration_item, args)
+                loss = pt_learner.train(
+                    model, queue, trg_queue, optim, miteration_item, args
+                )
                 train_loss += loss
 
                 ## == validation ==============

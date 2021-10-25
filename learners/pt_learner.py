@@ -34,18 +34,22 @@ class PtLearner:
 
         self.prototypes = None
 
-    def train(self, model, queue, optim, iteration, args):
+    def train(self, model, queue, trg_queue, optim, iteration, args):
         model.train()
         optim.zero_grad()
 
         queue_len = len(queue)
         support_len = queue_len * args.shot * args.ways
 
+        data_list = [item["support"] for item in queue] + [
+            item["query"] for item in queue + trg_queue
+        ]
+
         data = {
-            "input_ids": torch.cat([item["input_ids"] for item in queue]),
-            "attention_mask": torch.cat([item["attention_mask"] for item in queue]),
+            "input_ids": torch.cat([item["input_ids"] for item in data_list]),
+            "attention_mask": torch.cat([item["attention_mask"] for item in data_list]),
         }
-        labels = torch.cat([item["label"] for item in queue]).to(self.device)
+        labels = torch.cat([item["label"] for item in data_list]).to(self.device)
 
         outputs, features = model.forward(data)
         new_prototypes = compute_prototypes(
