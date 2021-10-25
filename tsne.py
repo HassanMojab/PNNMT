@@ -44,7 +44,7 @@ if not os.path.exists(args.save):
 sys.stdout = Logger(os.path.join(args.save, args.log_file))
 print(args)
 
-task_types = args.meta_tasks.split(",")
+task_types = args.tasks.split(",")
 list_of_tasks = []
 
 for tt in loc["train"].keys():
