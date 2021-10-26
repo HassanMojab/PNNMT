@@ -96,12 +96,10 @@ parser.add_argument("--log_file", type=str, default="main_output.txt", help="")
 parser.add_argument("--grad_clip", type=float, default=5.0)
 parser.add_argument("--meta_tasks", type=str, default="sc,pa,qa,tc,po")
 parser.add_argument("--target_task", type=str, default="")
-parser.add_argument("--random_task", action="store_true", help="")
+parser.add_argument("--queue_length", default=8, type=int)
 
 parser.add_argument("--num_workers", type=int, default=0, help="")
 parser.add_argument("--pin_memory", action="store_true", help="")
-parser.add_argument("--n_best_size", default=20, type=int)  # 20
-parser.add_argument("--max_answer_length", default=30, type=int)  # 30
 parser.add_argument(
     "--weight_decay", default=0.0, type=float, help="Weight decay if we apply some."
 )
@@ -327,13 +325,10 @@ def main():
             for miteration_item in range(args.meta_iteration):
 
                 # == Data preparation ===========
-                if args.random_task:
-                    k = random.randint(0, len(train_loader_iterations) - 1)
-                    queue = [next(train_loader_iterations[k])]
-                else:
-                    queue = [
-                        next(trainloader) for trainloader in train_loader_iterations
-                    ]
+                queue = [next(trainloader) for trainloader in train_loader_iterations]
+
+                if args.queue_length < len(train_loader_iterations):
+                    queue = random.sample(queue, args.queue_length)
 
                 trg_queue = []
                 if args.target_task != "":
