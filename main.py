@@ -75,7 +75,7 @@ parser.add_argument("--ways", type=int, default=3, help="number of ways")
 parser.add_argument("--shot", type=int, default=4, help="number of shots")
 parser.add_argument("--query_num", type=int, default=4, help="number of queries")
 parser.add_argument(
-    "--target_shot", type=int, default=4, help="number of target queries"
+    "--target_shot", type=int, default=0, help="number of target queries"
 )
 parser.add_argument("--meta_iteration", type=int, default=3000, help="")
 # ---------------

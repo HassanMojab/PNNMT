@@ -56,7 +56,7 @@ class DCELoss(nn.Module):
 
     def forward(self, features, prototypes, args):
         n_classes = args.ways
-        n_query = args.query_num
+        n_query = args.query_num + args.target_shot
 
         dists = euclidean_dist(features, prototypes)
         # dists = (-self.gamma * dists).exp()

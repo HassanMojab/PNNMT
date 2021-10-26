@@ -40,13 +40,10 @@ class PtLearner:
 
         queue_len = len(queue)
         support_len = queue_len * args.shot * args.ways
-        print("support_len:", support_len)
 
         data_list = [item["support"] for item in queue] + [
             item["query"] for item in queue + trg_queue
         ]
-        print("data_list:", data_list)
-        print("data_list len:", len(data_list))
 
         data = {
             "input_ids": torch.cat([item["input_ids"] for item in data_list]),
@@ -65,9 +62,6 @@ class PtLearner:
             self.prototypes = beta * self.prototypes + (1 - beta) * new_prototypes
         else:
             self.prototypes = new_prototypes
-
-        print("query features:", features[support_len:])
-        print("query features shape:", features[support_len:].shape)
 
         loss = self.criterion(
             features[support_len:],
