@@ -37,9 +37,6 @@ parser.add_argument(
     "--lambda_2", type=float, default=0.5, help="CE Coefficient in loss function"
 )
 parser.add_argument(
-    "--lambda_3", type=float, default=0.0, help="PL Coefficient in loss function"
-)
-parser.add_argument(
     "--temp_scale",
     type=float,
     default=0.2,

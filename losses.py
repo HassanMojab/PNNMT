@@ -24,49 +24,29 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-## prototype loss (PL): "Robust Classification with Convolutional Prototype Learning"
-class PrototypeLoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, features, labels, prototypes):
-        n = features.shape[0]
-        seen_labels = torch.unique(labels)
-
-        prototype_dic = {
-            l.item(): prototypes[idx].reshape(1, -1)
-            for idx, l in enumerate(seen_labels)
-        }
-        loss = 0.0
-        for idx, feature in enumerate(features):
-            dists = euclidean_dist(
-                feature.reshape(1, -1), prototype_dic[labels[idx].item()]
-            )  # [q_num, cls_num]
-            loss += dists
-
-        loss /= n
-        return loss
-
-
 class DCELoss(nn.Module):
     def __init__(self, device, gamma=0.05):
         super().__init__()
         self.gamma = gamma
         self.device = device
 
-    def forward(self, features, prototypes, args):
-        n_classes = args.ways
-        n_query = args.query_num + args.target_shot
+    def forward(self, features, labels, prototypes, n_query, n_classes):
+        unique_labels = torch.unique(labels)
+        features = torch.cat(
+            [features[(labels == l).nonzero(as_tuple=True)[0]] for l in unique_labels]
+        )
 
         dists = euclidean_dist(features, prototypes)
         # dists = (-self.gamma * dists).exp()
 
         log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1)
-        target_inds = torch.arange(0, n_classes, device=self.device, dtype=torch.long)
-        target_inds = target_inds.view(n_classes, 1, 1)
-        target_inds = target_inds.expand(n_classes, n_query, 1)
+        target_inds = (
+            torch.arange(0, n_classes, device=self.device, dtype=torch.long)
+            .view(n_classes, 1, 1)
+            .expand(n_classes, n_query, 1)
+        )
 
-        loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
+        loss_val = -log_p_y.gather(2, target_inds).mean()
         return loss_val
 
 
@@ -77,18 +57,11 @@ class CPELoss(nn.Module):
 
         self.lambda_1 = args.lambda_1
         self.lambda_2 = args.lambda_2
-        self.lambda_3 = args.lambda_3
 
         self.dce = DCELoss(device, gamma=args.temp_scale)
-        self.proto = PrototypeLoss()
         self.ce = torch.nn.CrossEntropyLoss()
 
-    def forward(self, features, outputs, labels, prototypes):
-        dce_loss = self.dce(features, prototypes, self.args)
+    def forward(self, features, outputs, labels, prototypes, n_query, n_classes):
+        dce_loss = self.dce(features, labels, prototypes, n_query, n_classes)
         cls_loss = self.ce(outputs, labels.long())
-        prototype_loss = self.proto(features, labels, prototypes)
-        return (
-            self.lambda_1 * dce_loss
-            + self.lambda_2 * cls_loss
-            + self.lambda_3 * prototype_loss
-        )
+        return self.lambda_1 * dce_loss + self.lambda_2 * cls_loss

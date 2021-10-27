@@ -14,14 +14,10 @@ def compute_prototypes(
   """
     seen_labels = torch.unique(support_labels)
 
-    # TODO: does it need to sort by labels??
-
     # Prototype i is the mean of all instances of features corresponding to labels == i
-    return torch.cat(
+    return torch.stack(
         [
-            support_features[(support_labels == l).nonzero(as_tuple=True)[0]]
-            .mean(0)
-            .reshape(1, -1)
+            support_features[(support_labels == l).nonzero(as_tuple=True)[0]].mean(0)
             for l in seen_labels
         ]
     )
@@ -40,9 +36,10 @@ class PtLearner:
 
         queue_len = len(queue)
         support_len = queue_len * args.shot * args.ways
+        n_query = queue_len * args.query_num + args.target_shot
 
         data_list = [item["support"] for item in queue] + [
-            item["query"] for item in queue + trg_queue
+            item["query"] for item in (queue + trg_queue)
         ]
 
         data = {
@@ -68,6 +65,8 @@ class PtLearner:
             outputs[support_len:],
             labels[support_len:],
             self.prototypes,
+            n_query=n_query,
+            n_classes=args.ways,
         )
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
