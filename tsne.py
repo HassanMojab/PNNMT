@@ -122,10 +122,16 @@ def main():
     tsne = TSNE()
     X_embedded = tsne.fit_transform(features)
 
+    # TODO: save TSNE results to a file
+
     # -------- Plot
     sns.set(rc={"figure.figsize": (11.7, 8.27)})
-    palette = sns.color_palette("bright", args.num_labels)
-    hue = [0] * total_steps + [1] * total_steps if args.target_task != "" else labels
+    if args.target_task != "":
+        palette = sns.color_palette("bright", 2)
+        hue = [0] * total_steps + [1] * total_steps
+    else:
+        palette = sns.color_palette("bright", args.num_labels)
+        hue = labels
 
     sns.scatterplot(
         x=X_embedded[:, 0],
