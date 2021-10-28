@@ -131,6 +131,8 @@ def main():
     if args.target_task != "":
         palette = sns.color_palette("bright", 2)
         hue = [0] * total_steps * args.batch_size + [1] * total_steps * args.batch_size
+        print(len(hue))
+        print(len(labels))
     else:
         palette = sns.color_palette("bright", args.num_labels)
         hue = labels
