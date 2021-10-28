@@ -118,6 +118,8 @@ def main():
     features = np.concatenate(features_list)
     labels = np.concatenate(labels_list)
 
+    # TODO: save features
+
     # -------- TSNE
     tsne = TSNE()
     X_embedded = tsne.fit_transform(features)
@@ -128,17 +130,13 @@ def main():
     sns.set(rc={"figure.figsize": (11.7, 8.27)})
     if args.target_task != "":
         palette = sns.color_palette("bright", 2)
-        hue = [0] * total_steps + [1] * total_steps
+        hue = [0] * total_steps * args.batch_size + [1] * total_steps * args.batch_size
     else:
         palette = sns.color_palette("bright", args.num_labels)
         hue = labels
 
     sns.scatterplot(
-        x=X_embedded[:, 0],
-        y=X_embedded[:, 1],
-        hue=hue,
-        legend="full",
-        palette=palette,
+        x=X_embedded[:, 0], y=X_embedded[:, 1], hue=hue, legend="full", palette=palette,
     )
     plt.savefig(os.path.join(args.save, "tsne.png"))
     print("saveing plot to tsne.png...")
