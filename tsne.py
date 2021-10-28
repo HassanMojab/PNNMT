@@ -96,7 +96,6 @@ def main():
     if args.target_task != "":
         len_task = len(list_of_tasks) - 1
         steps_list = [total_steps // len_task] * len_task + [total_steps]
-        print(steps_list)
     else:
         len_task = len(list_of_tasks)
         steps_list = [total_steps // len_task] * len_task
@@ -131,9 +130,9 @@ def main():
     sns.set(rc={"figure.figsize": (11.7, 8.27)})
     if args.target_task != "":
         palette = sns.color_palette("bright", 2)
-        hue = [0] * total_steps * args.batch_size + [1] * total_steps * args.batch_size
-        print(len(hue))
-        print(len(labels))
+        hue = [0] * sum(steps_list[:-1]) * args.batch_size + [
+            1
+        ] * total_steps * args.batch_size
     else:
         palette = sns.color_palette("bright", args.num_labels)
         hue = labels
