@@ -32,6 +32,7 @@ parser.add_argument("--save", type=str, default="saved/", help="")
 parser.add_argument("--load", type=str, default="saved/model_last.pt", help="")
 parser.add_argument("--log_file", type=str, default="tsne.txt", help="")
 parser.add_argument("--tasks", type=str, default="sc")
+parser.add_argument("--target_task", type=str, default="")
 
 args = parser.parse_args()
 
@@ -56,6 +57,10 @@ for tt in task_types:
         list_of_tasks.append(tt)
 
 list_of_tasks = list(set(list_of_tasks))
+
+if args.target_task != "":
+    list_of_tasks.append(args.target_task)
+
 print(list_of_tasks)
 
 if torch.cuda.is_available():
@@ -64,7 +69,6 @@ if torch.cuda.is_available():
 
     torch.cuda.manual_seed_all(args.seed)
 
-# DEVICE = xm.xla_device() if args.tpu else torch.device("cuda" if args.cuda else "cpu")
 DEVICE = torch.device("cuda" if args.cuda else "cpu")
 
 
@@ -87,13 +91,21 @@ def main():
     labels_list = []
 
     total_steps = args.steps
+    steps_list = []
+
+    if args.target_task != "":
+        len_task = len(list_of_tasks)
+        steps_list = [total_steps // len_task] * len_task
+    else:
+        len_task = len(list_of_tasks) - 1
+        steps_list = [total_steps // len_task] * len_task + [total_steps]
 
     model.eval()
     with torch.no_grad():
-        for task, dataloader in zip(list_of_tasks, dataloaders):
+        for task, dataloader, steps in zip(list_of_tasks, dataloaders, steps_list):
             print(f"task {task} --------------------------------")
             for i, batch in enumerate(dataloader):
-                if i >= total_steps:
+                if i >= steps:
                     break
 
                 labels_list.append(batch["label"])
@@ -101,24 +113,27 @@ def main():
                 features_list.append(features.cpu().detach().numpy())
 
                 if (i + 1) % 10 == 0:
-                    print(f"batch#{i + 1} | {(i + 1) / total_steps * 100:.2f}%")
+                    print(f"batch#{i + 1} | {(i + 1) / steps * 100:.2f}%")
 
     features = np.concatenate(features_list)
     labels = np.concatenate(labels_list)
 
+    # -------- TSNE
     tsne = TSNE()
     X_embedded = tsne.fit_transform(features)
+
+    # -------- Plot
     sns.set(rc={"figure.figsize": (11.7, 8.27)})
     palette = sns.color_palette("bright", args.num_labels)
+    hue = [0] * total_steps + [1] * total_steps if args.target_task != "" else labels
 
     sns.scatterplot(
         x=X_embedded[:, 0],
         y=X_embedded[:, 1],
-        hue=labels,
+        hue=hue,
         legend="full",
         palette=palette,
     )
-    plt.show(block=True)
     plt.savefig(os.path.join(args.save, "tsne.png"))
     print("saveing plot to tsne.png...")
 
