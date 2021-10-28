@@ -99,6 +99,7 @@ def main():
     else:
         len_task = len(list_of_tasks) - 1
         steps_list = [total_steps // len_task] * len_task + [total_steps]
+        print(steps_list)
 
     model.eval()
     with torch.no_grad():
