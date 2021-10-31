@@ -246,10 +246,11 @@ def main():
     ### ================================
 
     ### == Model =======================
-    model = BertMetaLearning(args).to(DEVICE)
     if args.load != "":
         print(f"loading model {args.load}...")
         model = torch.load(args.load)
+    else:
+        model = BertMetaLearning(args).to(DEVICE)
 
     # steps = args.epochs * args.meta_iteration
 

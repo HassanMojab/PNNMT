@@ -141,7 +141,7 @@ def main():
         x=X_embedded[:, 0], y=X_embedded[:, 1], hue=hue, legend="full", palette=palette,
     )
     plt.savefig(os.path.join(args.save, "tsne.png"))
-    print("saveing plot to tsne.png...")
+    print("saving plot to tsne.png...")
 
 
 if __name__ == "__main__":
