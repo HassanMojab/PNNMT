@@ -26,19 +26,8 @@ parser.add_argument(
 parser.add_argument(
     "--local_model", action="store_true", help="use local pretrained model"
 )
-
 parser.add_argument("--sc_labels", type=int, default=3, help="")
-parser.add_argument("--qa_labels", type=int, default=2, help="")
-parser.add_argument("--tc_labels", type=int, default=10, help="")
-parser.add_argument("--po_labels", type=int, default=18, help="")
-parser.add_argument("--pa_labels", type=int, default=2, help="")
-
-parser.add_argument("--qa_batch_size", type=int, default=8, help="batch size")
 parser.add_argument("--sc_batch_size", type=int, default=32, help="batch size")
-parser.add_argument("--tc_batch_size", type=int, default=32, help="batch size")
-parser.add_argument("--po_batch_size", type=int, default=32, help="batch_size")
-parser.add_argument("--pa_batch_size", type=int, default=8, help="batch size")
-
 parser.add_argument("--seed", type=int, default=0, help="seed for numpy and pytorch")
 parser.add_argument(
     "--log_interval",
@@ -53,25 +42,9 @@ parser.add_argument("--load", type=str, default="", help="")
 parser.add_argument("--log_file", type=str, default="zeroshot_output.txt", help="")
 parser.add_argument("--grad_clip", type=float, default=1.0)
 
-parser.add_argument("--task", type=str, default="qa_hi")
-
-parser.add_argument("--n_best_size", default=20, type=int)
-parser.add_argument("--max_answer_length", default=30, type=int)
-parser.add_argument(
-    "--weight_decay", default=0.0, type=float, help="Weight decay if we apply some."
-)
-parser.add_argument("--warmup", default=0, type=int)
-parser.add_argument(
-    "--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer."
-)
+parser.add_argument("--task", type=str, default="sc_fa")
 
 args = parser.parse_args()
-
-logger = {"args": vars(args)}
-logger["train_loss"] = []
-logger["val_loss"] = []
-logger["val_metric"] = []
-logger["train_metric"] = []
 
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
