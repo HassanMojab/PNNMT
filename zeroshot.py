@@ -105,10 +105,10 @@ test_dataloader = DataLoader(
     test_corpus, batch_size=batch_size, pin_memory=True, drop_last=True
 )
 
-model = BertMetaLearning(args).to(DEVICE)
-
 if args.load != "":
     model = torch.load(args.load)
+else:
+    model = BertMetaLearning(args).to(DEVICE)
 
 
 def test():
