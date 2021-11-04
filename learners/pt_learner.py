@@ -45,6 +45,7 @@ class PtLearner:
         data = {
             "input_ids": torch.cat([item["input_ids"] for item in data_list]),
             "attention_mask": torch.cat([item["attention_mask"] for item in data_list]),
+            "token_type_ids": torch.cat([item["token_type_ids"] for item in data_list]),
         }
         labels = torch.cat([item["label"] for item in data_list]).to(self.device)
 

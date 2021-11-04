@@ -22,19 +22,21 @@ class BertMetaLearning(nn.Module):
     def forward(self, data, classify=True):
         data["input_ids"] = data["input_ids"].to(self.device)
         data["attention_mask"] = data["attention_mask"].to(self.device)
+        data["token_type_ids"] = data["token_type_ids"].to(self.device)
 
-        outputs = self.model(data["input_ids"], attention_mask=data["attention_mask"])
+        outputs = self.model(
+            data["input_ids"],
+            attention_mask=data["attention_mask"],
+            token_type_ids=data["token_type_ids"].long(),
+        )
 
-        features = outputs[1]  # [n, 768]
+        features = outputs[1]
 
         logits = None
 
         if classify:
             pooled_output = self.sc_dropout(features)
             logits = self.sc_classifier(pooled_output)
-
-        # loss = F.cross_entropy(logits, data["label"], reduction="none")
-        # outputs = (loss, logits) + outputs[2:]
 
         return logits, features
 
