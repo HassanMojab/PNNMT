@@ -25,6 +25,14 @@ parser.add_argument(
     default=100,
     help="Print after every log_interval batches",
 )
+# bert-base-multilingual-cased
+# xlm-roberta-base
+parser.add_argument(
+    "--model_name",
+    type=str,
+    default="xlm-roberta-base",
+    help="name of the pretrained model",
+)
 parser.add_argument("--data_dir", type=str, default="data/", help="directory of data")
 parser.add_argument("--cuda", action="store_true", help="use CUDA")
 parser.add_argument("--tpu", action="store_true", help="use TPU")
@@ -77,7 +85,7 @@ dataloaders = []
 for task in list_of_tasks:
     corpus = CorpusSC(
         *get_loc("train", task, "data"),
-        model_name="xlm-roberta-base",
+        model_name=args.model_name,
         local_files_only=False,
     )
     dataloader = DataLoader(corpus, batch_size=args.batch_size, shuffle=True)
