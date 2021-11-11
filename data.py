@@ -14,16 +14,6 @@ class CorpusSC(Dataset):
         self, path, file, model_name="xlm-roberta-base", local_files_only=False
     ):
         self.max_sequence_length = 128
-        self.cls_token = "[CLS]"
-        self.sep_token = "[SEP]"
-        self.pad_token = 0
-        self.sequence_a_segment_id = 0
-        self.sequence_b_segment_id = 1
-        self.pad_token_segment_id = 0
-        self.cls_token_segment_id = 0
-        self.mask_padding_with_zero = True
-        self.doc_stride = 128
-        self.max_query_length = 64
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name, do_lower_case=False, local_files_only=local_files_only
